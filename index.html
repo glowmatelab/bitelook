@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>BiteLook // YUMMY FOOD HUD</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
+<style>
+  :root {
+    --bg-gradient: linear-gradient(135deg, #FFDE4D 0%, #FF8E00 25%, #FF4E88 60%, #FF3D68 100%);
+    --panel-bg: rgba(255, 255, 255, 0.96);
+    --text-dark: #2D2727;
+    --text-muted: #6B6464;
+    --color-primary: #FF3D68;
+    --color-secondary: #FF8e00;
+    --color-accent: #00D7FF;
+    --score-good: #00D26A;
+    --score-warn: #FFB300;
+    --score-bad: #FF1E56;
+    --pop-shadow: 0 16px 32px rgba(235, 61, 0, 0.18), inset 0 -4px 0px rgba(0,0,0,0.12);
+    --border-radius-main: 24px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Fredoka', sans-serif;
+    background: var(--bg-gradient);
+    color: var(--text-dark);
+    padding: 24px 16px;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  .bg-emoji { position: fixed; font-size: 85px; opacity: 0.15; z-index: 0; pointer-events: none; filter: drop-shadow(0 6px 10px rgba(0,0,0,0.15)); animation: floatAround 8s infinite ease-in-out; }
+  .emoji-1 { top: 6%; left: -10px; transform: rotate(-15deg); }
+  .emoji-2 { top: 28%; right: -15px; transform: rotate(25deg); animation-delay: 1.5s; }
+  .emoji-3 { bottom: 20%; left: -10px; transform: rotate(10deg); animation-delay: 3s; }
+  .emoji-4 { bottom: 4%; right: -10px; transform: rotate(-20deg); animation-delay: 4.5s; }
+  @keyframes floatAround { 0%, 100% { transform: translateY(0) rotate(0deg) scale(1); } 50% { transform: translateY(-20px) rotate(10deg) scale(1.05); } }
+
+  .app { max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; position: relative; z-index: 10; }
+
+  .header { display: flex; align-items: center; justify-content: space-between; padding: 0 4px; }
+  .header .logo { font-size: 38px; font-weight: 700; color: #ffffff; text-shadow: 0 4px 0px rgba(0,0,0,0.2); letter-spacing: -0.5px; }
+  .header .logo span { color: #FFDE4D; }
+  .header .badge { font-size: 13px; font-weight: 700; background: #ffffff; padding: 6px 14px; border-radius: 50px; color: var(--color-primary); box-shadow: 0 6px 12px rgba(0,0,0,0.1); }
+
+  .pop-card { background: var(--panel-bg); border-radius: var(--border-radius-main); padding: 22px; border: 3px solid #ffffff; box-shadow: var(--pop-shadow); }
+
+  .scanner-box { position: relative; height: 240px; border-radius: var(--border-radius-main); overflow: hidden; background: #FFFBF0; border: 4px solid #ffffff; box-shadow: 0 12px 24px rgba(0,0,0,0.12); }
+  #video { width: 100%; height: 100%; object-fit: cover; }
+
+  .placeholder-box { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+  .placeholder-icon { width: 80px; height: 80px; background: #FFE9AE; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; border: 4px dashed #FF8e00; animation: popPulse 1.8s infinite ease-in-out; }
+  @keyframes popPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+  .placeholder-box p { font-size: 20px; font-weight: 700; color: #FF8e00; }
+  .placeholder-box span { font-size: 13px; color: var(--text-muted); font-weight: 600; }
+
+  .scan-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+  .scan-frame { width: 85%; height: 75%; border: 3px dashed var(--color-primary); border-radius: 18px; position: relative; }
+  .scan-frame::before { content: ''; position: absolute; width: 100%; height: 6px; background: var(--color-primary); top: 0; left: 0; border-radius: 10px; box-shadow: 0 0 12px var(--color-primary); animation: laserScan 2s infinite ease-in-out; }
+  @keyframes laserScan { 0% { top: 0%; } 50% { top: 100%; } 100% { top: 0%; } }
+
+  .btn { width: 100%; padding: 18px; border-radius: 20px; border: none; font-size: 19px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); background: #ffffff; color: var(--color-primary); font-family: 'Fredoka', sans-serif; }
+  .btn:hover { transform: scale(1.02); }
+  .btn:active { transform: scale(0.97); }
+  .btn-launch { background: #FF3D68; color: white; box-shadow: 0 8px 0px #B81438; border: 2px solid #ffffff; }
+  .btn-launch:active { box-shadow: 0 2px 0px #B81438; transform: translateY(6px); }
+  .btn-stop { background: #2D2727; color: white; box-shadow: 0 6px 0px #000; border: 2px solid #ffffff;}
+
+  .mode-tabs { display: flex; background: rgba(255,255,255,0.3); border-radius: 16px; padding: 4px; gap: 4px; }
+  .mode-tab { flex: 1; padding: 10px; border-radius: 12px; border: none; font-family: 'Fredoka', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; transition: all .2s; background: transparent; color: #ffffff; }
+  .mode-tab.active { background: #ffffff; color: var(--color-primary); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+
+  .section-label { font-size: 16px; color: var(--color-primary); font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+
+  .search-wrapper { display: flex; background: #FFF3F3; border-radius: 18px; padding: 6px; border: 3px solid #FFE3E3; transition: all 0.3s ease; }
+  .search-wrapper.searching-active { transform: scale(0.95); opacity: 0.5; pointer-events: none; }
+  .search-wrapper input { flex: 1; border: none; background: transparent; padding: 0 12px; font-size: 16px; font-weight: 600; color: var(--text-dark); outline: none; font-family: 'Fredoka', sans-serif; }
+  .search-wrapper input::placeholder { color: #BBB4B4; }
+  .search-wrapper button { background: var(--color-primary); color: white; border: none; padding: 10px 22px; border-radius: 14px; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 3px 0px #B81438; font-family: 'Fredoka', sans-serif; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .chip { padding: 8px 14px; border-radius: 14px; background: #ffffff; border: 2px solid #FFE3E3; font-size: 14px; font-weight: 600; color: var(--text-dark); cursor: pointer; transition: all 0.2s; }
+  .chip:hover { border-color: var(--color-primary); color: var(--color-primary); transform: scale(1.04); }
+
+  .loader { display: none; flex-direction: column; align-items: center; justify-content: center; padding: 30px 0; gap: 15px; }
+  .pan-container { position: relative; width: 120px; height: 120px; animation: panFlip 1.4s infinite ease-in-out; }
+  .pan-base { position: absolute; width: 70px; height: 70px; background: #333; border-radius: 50%; bottom: 20px; left: 10px; border: 4px solid #444; }
+  .pan-handle { position: absolute; width: 50px; height: 12px; background: #555; border-radius: 6px; bottom: 50px; right: 5px; transform: rotate(-15deg); }
+  .egg-omlet { position: absolute; width: 42px; height: 36px; background: #ffffff; border-radius: 50% 40% 50% 45%; top: 35px; left: 24px; animation: eggJump 1.4s infinite ease-in-out; }
+  .egg-yolk { position: absolute; width: 16px; height: 16px; background: #FFB300; border-radius: 50%; top: 10px; left: 13px; box-shadow: inset -2px -2px 0 rgba(0,0,0,0.1); }
+  @keyframes panFlip { 0%, 100% { transform: rotate(0deg); } 30% { transform: rotate(-10deg) translateY(5px); } 60% { transform: rotate(12deg) translateY(-8px); } }
+  @keyframes eggJump { 0%, 100% { transform: translateY(0) scaleY(1); } 40% { transform: translateY(-45px) rotate(40deg) scaleY(0.9); } 70% { transform: translateY(0) scaleY(1.1); } }
+  .loader p { font-size: 16px; color: #ffffff; font-weight: 700; text-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+
+  .results-grid { display: none; flex-direction: column; margin-top: 10px; }
+  .search-list { display: flex; flex-direction: column; gap: 8px; }
+  .search-item { display: flex; align-items: center; gap: 14px; padding: 12px; border-radius: 16px; background: #FFFBF0; border: 2px solid #FFEFAF; cursor: pointer; }
+  .search-item:hover { border-color: var(--color-secondary); }
+  .search-item img { width: 50px; height: 50px; object-fit: contain; border-radius: 12px; background: #fff; padding: 2px; border: 1px solid #FFEFAF; }
+
+  .product-layout { display: none; flex-direction: column; margin-top: 10px; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+  @keyframes popIn { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  .meta-panel { display: flex; gap: 16px; align-items: center; padding-bottom: 16px; border-bottom: 3px dashed #FFE3E3; }
+  .prod-img { width: 90px; height: 90px; object-fit: contain; border-radius: 18px; background: white; padding: 4px; border: 2px solid #FFE3E3; }
+  .prod-title { font-size: 22px; font-weight: 700; color: var(--text-dark); line-height: 1.2; }
+  .prod-sub { font-size: 14px; color: var(--text-muted); font-weight: 600; margin-top: 2px; }
+  .prod-tags { display: flex; gap: 8px; margin-top: 8px; font-size: 13px; font-weight: 700; flex-wrap: wrap; }
+  .tag-price { color: white; background: var(--color-primary); padding: 3px 10px; border-radius: 8px; }
+  .tag-wt { background: #FFF3F3; padding: 3px 10px; border-radius: 8px; color: var(--color-primary); }
+  .btn-add-compare { background: #FFDE4D; color: #2D2727; border: none; padding: 6px 14px; border-radius: 10px; font-family: 'Fredoka', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .2s; box-shadow: 0 3px 0 #D9B300; }
+  .btn-add-compare:hover { background: #FFB300; transform: scale(1.04); }
+  .btn-add-compare:active { transform: scale(.97); box-shadow: 0 1px 0 #D9B300; }
+
+  .nutri-section { margin: 16px 0; }
+  .nutri-row { display: flex; gap: 6px; align-items: flex-end; }
+  .ng { border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; width: 36px; height: 36px; transition: transform .2s; opacity: .25; }
+  .ng.active { transform: scale(1.3); opacity: 1; z-index:1; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+  .ng-a { background: #27500A; color: #EAF3DE; }
+  .ng-b { background: #639922; color: #EAF3DE; }
+  .ng-c { background: #BA7517; color: #FAEEDA; }
+  .ng-d { background: #A32D2D; color: #FCEBEB; }
+  .ng-e { background: #501313; color: #FCEBEB; }
+  .nutri-label { font-size: 14px; color: var(--text-dark); font-weight: 700; margin-left: 14px; align-self: center; background: #FFF3F3; padding: 4px 10px; border-radius: 8px; border: 1px solid #FFE3E3; }
+
+  .serving-section { margin: 14px 0; background: #FFF3F3; border-radius: 16px; padding: 14px; border: 2px solid #FFE3E3; }
+  .serving-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .serving-row label { font-size: 14px; color: var(--text-muted); font-weight: 700; white-space: nowrap; }
+  .serving-row input[type=number] { width: 72px; padding: 8px 10px; font-size: 15px; font-family: 'Fredoka', sans-serif; font-weight: 700; border: 2px solid #FFD6D6; border-radius: 10px; background: white; color: var(--text-dark); outline: none; }
+  .serving-row input[type=number]:focus { border-color: var(--color-primary); }
+  .serving-presets { display: flex; gap: 6px; flex-wrap: wrap; }
+  .preset-btn { padding: 6px 12px; border-radius: 10px; background: white; border: 2px solid #FFE3E3; font-family: 'Fredoka', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; color: var(--text-dark); transition: all .15s; }
+  .preset-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+
+  .macro-display { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 14px 0; }
+  .macro-node { background: #FFF8F8; border-radius: 16px; padding: 12px 2px; text-align: center; border: 2px solid #FFEAE9; }
+  .macro-title { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+  .macro-data { font-size: 14px; font-weight: 700; margin-top: 4px; color: var(--text-dark); }
+  .macro-bar { height: 4px; background: #FFE3E3; border-radius: 4px; overflow: hidden; margin-top: 6px; width: 80%; margin-left: auto; margin-right: auto; }
+  .macro-bar-fill { height: 100%; border-radius: 4px; transition: width .6s; width: 0%; }
+
+  .score-section { margin: 18px 0; }
+  .bar-track { height: 16px; background: #FFF3F3; border-radius: 50px; overflow: hidden; margin-top: 8px; border: 2px solid #FFE3E3; }
+  .bar-progress { height: 100%; width: 0%; transition: width 0.8s ease-out; border-radius: 50px; }
+  .score-badge { display: inline-flex; align-items: center; padding: 8px 16px; border-radius: 50px; font-size: 14px; font-weight: 700; margin-top: 10px; box-shadow: 0 4px 0px rgba(0,0,0,0.05); color: white; }
+
+  .ingredients-box { font-size: 14px; color: var(--text-dark); background: #FFFBF0; padding: 16px; border-radius: 18px; line-height: 1.5; font-weight: 500; border: 2px solid #FFEFAF; max-height: 120px; overflow-y: auto; }
+  .hazard-panel { background: #FFF0F3; border-radius: 20px; padding: 18px; margin-top: 18px; border: 2px solid #FFD1DC; }
+  .hazard-header { font-size: 15px; font-weight: 700; color: var(--score-bad); margin-bottom: 12px; }
+  .hazard-card { font-size: 13px; color: #5F1A2B; background: #ffffff; padding: 12px; border-radius: 12px; margin-bottom: 8px; border: 1px solid #FFD1DC; line-height: 1.4; }
+  .hazard-card:last-child { margin-bottom: 0; }
+
+  .compare-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .compare-slot { background: #FFFBF0; border: 2px dashed #FFEFAF; border-radius: 18px; padding: 14px; min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 6px; transition: all 0.2s; }
+  .compare-slot.filled { align-items: stretch; justify-content: flex-start; text-align: left; border-style: solid; border-color: #FFD6D6; background: white; }
+  .compare-slot-empty-icon { font-size: 28px; }
+  .compare-slot-empty-txt { font-size: 13px; font-weight: 700; color: var(--text-muted); }
+  .compare-prod-name { font-size: 14px; font-weight: 700; color: var(--text-dark); line-height: 1.3; margin-bottom: 8px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
+  .compare-metric { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; padding: 5px 0; border-bottom: 1px dashed #FFE3E3; }
+  .compare-metric:last-of-type { border-bottom: none; }
+  .c-lbl { color: var(--text-muted); }
+  .c-win { color: #00D26A; font-weight: 700; }
+  .c-lose { color: #FF1E56; font-weight: 700; }
+  .c-tie { color: var(--text-dark); }
+  .compare-remove { font-size: 12px; color: var(--color-primary); cursor: pointer; margin-top: auto; font-weight: 700; text-align: center; padding-top: 6px; }
+  
+  .compare-winner-bar { text-align: center; padding: 14px; background: #E6FCFF; border-radius: 16px; font-size: 15px; font-weight: 700; color: #007A5E; border: 2px solid #BCEEBF; margin-top: 10px; }
+  .compare-tie-bar { text-align: center; padding: 14px; background: #FFF9E6; border-radius: 16px; font-size: 15px; font-weight: 700; color: #7A5A00; border: 2px solid #FFE8A0; margin-top: 10px; }
+  .btn-compare-reset { width: 100%; padding: 12px; border-radius: 14px; border: 2px solid #FFE3E3; background: white; font-family: 'Fredoka', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; color: var(--text-muted); margin-top: 10px; transition: all .2s; }
+  .btn-compare-reset:hover { border-color: var(--color-primary); color: var(--color-primary); }
+
+  .history-panel { display: flex; flex-direction: column; gap: 12px; margin-top: 15px; }
+  .history-top { display: flex; justify-content: space-between; align-items: center; }
+  .btn-clear { font-size: 13px; color: var(--text-muted); font-weight: 700; cursor: pointer; background: none; border: none; font-family: 'Fredoka', sans-serif; outline: none; }
+  .btn-clear:hover { color: var(--color-primary); }
+  .hist-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: #FFF3F3; border-radius: 16px; font-size: 14px; cursor: pointer; border: 2px solid #FFE3E3; font-weight: 600; margin-bottom: 6px; }
+  .hist-row:hover { border-color: var(--color-primary); background: #ffffff; }
+  .hist-row:last-child { margin-bottom: 0; }
+
+  .status-toast { text-align: center; font-size: 14px; padding: 12px; border-radius: 14px; display: none; font-weight: 700; background: #2D2727; color: white; margin-top: 10px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="bg-emoji emoji-1">🍕</div>
+<div class="bg-emoji emoji-2">🍔</div>
+<div class="bg-emoji emoji-3">🍟</div>
+<div class="bg-emoji emoji-4">🍳</div>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">Bite<span>Look</span></div>
+    <div class="badge">HUD MODE 🍳</div>
+  </div>
+
+  <!-- MODE TABS -->
+  <div class="mode-tabs">
+    <button class="mode-tab active" id="tabSearch" onclick="setMode('search')">🔍 Search / Scan</button>
+    <button class="mode-tab" id="tabCompare" onclick="setMode('compare')">⚖️ Compare</button>
+  </div>
+
+  <!-- ===== SEARCH MODE ===== -->
+  <div id="searchMode">
+
+    <div class="scanner-box">
+      <div class="placeholder-box" id="placeholder">
+        <div class="placeholder-icon">📸</div>
+        <p>SCAN TIME! 🍕</p>
+        <span>Point at any Snack Barcode</span>
+      </div>
+      <video id="video" class="hidden" autoplay playsinline></video>
+      <div class="scan-overlay hidden" id="scanOverlay">
+        <div class="scan-frame"></div>
+      </div>
+    </div>
+
+    <div style="margin-top: 10px;">
+      <button class="btn btn-launch" id="cameraBtn" onclick="startCamera()">LAUNCH SCANNER 🚀</button>
+      <button class="btn btn-stop hidden" id="stopBtn" onclick="stopCamera()">CLOSE CAMERA ❌</button>
+    </div>
+
+    <div class="pop-card" style="margin-top: 15px;">
+      <div class="section-label">Quick Search Console</div>
+      <div class="search-wrapper" id="searchWrapperNode">
+        <input type="text" id="searchInput" placeholder="Type snack name or barcode..." onkeydown="if(event.key==='Enter')handleSearchInput()"/>
+        <button onclick="handleSearchInput()">FIND</button>
+      </div>
+      <div class="chips">
+        <span class="chip" onclick="quickSelect('unclechips')">🍟 Uncle Chips</span>
+        <span class="chip" onclick="quickSelect('sprite')">🍋 Sprite</span>
+        <span class="chip" onclick="quickSelect('thumsup')">🥤 Thums Up</span>
+        <span class="chip" onclick="quickSelect('cocacola')">🔴 Coca-Cola</span>
+        <span class="chip" onclick="quickSelect('campa')">🍊 Campa Cola</span>
+        <span class="chip" onclick="quickSelect('maggi')">🍜 Maggi</span>
+        <span class="chip" onclick="quickSelect('oreo')">🍪 Oreo</span>
+        <span class="chip" onclick="quickSelect('kurkure')">🌶️ Kurkure</span>
+      </div>
+    </div>
+
+    <div class="status-toast" id="statusMsg"></div>
+
+    <!-- LOADER -->
+    <div class="loader" id="loading">
+      <div class="pan-container">
+        <div class="pan-base"></div>
+        <div class="pan-handle"></div>
+        <div class="egg-omlet"><div class="egg-yolk"></div></div>
+      </div>
+      <p>Cooking Food DNA Logs... 🍳🔥</p>
+    </div>
+
+    <!-- RESULTS MULTI MATCH -->
+    <div class="pop-card results-grid" id="resultsGrid">
+      <div class="section-label">Discovered Food Matches</div>
+      <div class="search-list" id="searchList"></div>
+    </div>
+
+    <!-- PRODUCT DETAIL CARD -->
+    <div class="pop-card product-layout" id="productCard">
+      <div class="meta-panel">
+        <img src="" class="prod-img" id="productImg" alt="Food Item" onerror="this.src=noImgPlaceholder;">
+        <div>
+          <div class="prod-title" id="productName">---</div>
+          <div class="prod-sub" id="productBrand">---</div>
+          <div class="prod-tags">
+            <span class="tag-price" id="productPrice">₹--</span>
+            <span class="tag-wt" id="productWeight">--</span>
+          </div>
+          <button class="btn-add-compare" style="margin-top:10px" onclick="addToCompare()">+ Compare Me ⚖️</button>
+        </div>
+      </div>
+
+      <!-- NUTRI-SCORE -->
+      <div class="nutri-section">
+        <div class="section-label">Nutri-Score 🏅</div>
+        <div style="display:flex;align-items:center">
+          <div class="nutri-row">
+            <div class="ng ng-a" id="ng-A">A</div>
+            <div class="ng ng-b" id="ng-B">B</div>
+            <div class="ng ng-c" id="ng-C">C</div>
+            <div class="ng ng-d" id="ng-D">D</div>
+            <div class="ng ng-e" id="ng-E">E</div>
+          </div>
+          <div class="nutri-label" id="nutriLabel">---</div>
+        </div>
+      </div>
+
+      <!-- SERVING CALCULATOR -->
+      <div class="serving-section">
+        <div class="section-label" style="margin-bottom:10px">Serving Calculator 🍽️</div>
+        <div class="serving-row">
+          <label>Size:</label>
+          <input type="number" id="servingSize" min="1" max="1000" value="100" step="1" oninput="updateMacros()"/>
+          <span style="font-size:14px;font-weight:700;color:var(--text-muted)">g / ml</span>
+        </div>
+        <div class="serving-presets">
+          <button class="preset-btn" onclick="setServing(30)">30g</button>
+          <button class="preset-btn" onclick="setServing(50)">50g</button>
+          <button class="preset-btn" onclick="setServing(100)">100g</button>
+          <button class="preset-btn" onclick="setServing(200)">200ml</button>
+          <button class="preset-btn" onclick="setServing(250)">250ml</button>
+          <button class="preset-btn" onclick="setServing(500)">500ml</button>
+        </div>
+      </div>
+
+      <!-- MACROS Grid -->
+      <div class="macro-display">
+        <div class="macro-node">
+          <div class="macro-title">Calories</div>
+          <div class="macro-data" id="calories">—</div>
+          <div class="macro-bar"><div class="macro-bar-fill" id="barKcal" style="background:#FF3D68"></div></div>
+        </div>
+        <div class="macro-node">
+          <div class="macro-title">Sugar</div>
+          <div class="macro-data" id="sugar">—</div>
+          <div class="macro-bar"><div class="macro-bar-fill" id="barSugar" style="background:#FF8e00"></div></div>
+        </div>
+        <div class="macro-node">
+          <div class="macro-title">Fat</div>
+          <div class="macro-data" id="fat">—</div>
+          <div class="macro-bar"><div class="macro-bar-fill" id="barFat" style="background:#FF3D68"></div></div>
+        </div>
+        <div class="macro-node">
+          <div class="macro-title">Salt</div>
+          <div class="macro-data" id="salt">—</div>
+          <div class="macro-bar"><div class="macro-bar-fill" id="barSalt" style="background:#534AB7"></div></div>
+        </div>
+      </div>
+
+      <!-- HEALTH POWER INDEX -->
+      <div class="score-section">
+        <div class="section-label">Health Power Status</div>
+        <div class="bar-track"><div class="bar-progress" id="meterFill"></div></div>
+        <div class="score-badge" id="healthBadge">---</div>
+      </div>
+
+      <!-- INGREDIENTS TEXT PANEL -->
+      <div>
+        <div class="section-label">All Ingredients</div>
+        <div class="ingredients-box" id="ingredientsText">---</div>
+      </div>
+
+      <!-- HAZARD WARNING POPUP -->
+      <div class="hazard-panel" id="harmfulContainer" style="display:none">
+        <div class="hazard-header">⚠️ Warning: Chemical Red Flags!</div>
+        <div id="warningList"></div>
+      </div>
+    </div>
+
+    <!-- LOCAL HISTORY BOX -->
+    <div class="pop-card history-panel" id="historyBoxPanel">
+      <div class="history-top">
+        <div class="section-label" style="margin:0">Recent Scans</div>
+        <button class="btn-clear" onclick="clearHistory()">Clear All</button>
+      </div>
+      <div id="historyListContainer"></div>
+    </div>
+
+  </div><!-- /searchMode -->
+
+  <!-- ===== COMPARE MODE PANELS ===== -->
+  <div id="compareMode" class="hidden">
+    <div class="pop-card">
+      <div class="section-label">Side-by-Side Comparison ⚖️</div>
+      <p style="font-size:13px;color:var(--text-muted);font-weight:600;margin-bottom:14px">
+        Search karo → product dekho → "+ Compare Me" dabao. Dono slots fill karo aur health battle winner dekho!
+      </p>
+      <div class="compare-slots" id="compareSlots">
+        <div class="compare-slot" id="slot0">
+          <div class="compare-slot-empty-icon">🍽️</div>
+          <div class="compare-slot-empty-txt">Slot 1 Khali hai<br>Search karke add karo</div>
+        </div>
+        <div class="compare-slot" id="slot1">
+          <div class="compare-slot-empty-icon">🍽️</div>
+          <div class="compare-slot-empty-txt">Slot 2 Khali hai<br>Search karke add karo</div>
+        </div>
+      </div>
+      <div id="compareResult"></div>
+      <button class="btn-compare-reset" onclick="resetCompare()">🗑️ Reset Compare</button>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+/* ============================================================
+   DATABASE ARCHITECTURE (Offline Stack Fallback)
+   ============================================================ */
+const noImgPlaceholder = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='%23FF3D68'><path d='M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z'/></svg>";
+
+const fallbackDatabase = {
+  "8901063019142": { product_name:"Lays Classic Salted", brands:"PepsiCo India", nutriments:{"energy-kcal_100g":541,sugars_100g:0.5,fat_100g:33,salt_100g:1.1}, ingredients_text:"Potato, Edible Vegetable Oil (Palmolein Oil), Salt.", image_front_url:"https://images.openfoodfacts.org/images/products/890/106/301/9142/front_en.11.400.jpg", _price:"₹20", _weight:"50g" },
+  "8901826100191": { product_name:"Maggi 2-Min Masala Noodles", brands:"Nestle India", nutriments:{"energy-kcal_100g":427,sugars_100g:2.2,fat_100g:15.7,salt_100g:3.2}, ingredients_text:"Wheat flour, Palm oil, Salt, Wheat gluten, Spices mix, Hydrolysed groundnut protein, MSG (E621), Acid regulator.", image_front_url:"https://images.openfoodfacts.org/images/products/890/182/610/0191/front_en.31.400.jpg", _price:"₹14", _weight:"70g" },
+  "7622210449283": { product_name:"Oreo Chocolate Biscuits", brands:"Mondelez International", nutriments:{"energy-kcal_100g":480,sugars_100g:38,fat_100g:20,salt_100g:0.9}, ingredients_text:"Wheat Flour, Sugar, Palmolein Oil, Cocoa Powder, Invert Sugar, Raising Agents, Salt, Emulsifier.", image_front_url:"https://images.openfoodfacts.org/images/products/762/221/044/9283/front_en.17.400.jpg", _price:"₹30", _weight:"120g" },
+  "8901063363313": { product_name:"Kurkure Masala Munch", brands:"PepsiCo India", nutriments:{"energy-kcal_100g":558,sugars_100g:0.2,fat_100g:34.5,salt_100g:1.7}, ingredients_text:"Rice Meal, Corn Meal, Gram Meal, Edible Vegetable Oil (Palmolein Oil), Seasoning (Spices, Condiments, Salt, Sugar, MSG E621).", image_front_url:"https://images.openfoodfacts.org/images/products/890/106/336/3313/front_en.61.400.jpg", _price:"₹10", _weight:"40g" },
+  "unclechips": { product_name:"Uncle Chips Spicy Treat", brands:"PepsiCo India", nutriments:{"energy-kcal_100g":546,sugars_100g:1.2,fat_100g:34.0,salt_100g:1.4}, ingredients_text:"Potato, Edible Vegetable Oil (Palmolein Oil), Spices & Condiments, Salt, Acidity Regulators.", image_front_url:"", _price:"₹20", _weight:"50g" },
+  "cocacola": { product_name:"Coca-Cola Original Taste", brands:"The Coca-Cola Company", nutriments:{"energy-kcal_100g":44,sugars_100g:10.9,fat_100g:0,salt_100g:0.02}, ingredients_text:"Carbonated Water, Sugar, Acidity Regulator (338) / Phosphoric Acid, Caffeine, Natural Colour (150d).", image_front_url:"", _price:"₹40", _weight:"250ml" },
+  "thumsup": { product_name:"Thums Up Charged", brands:"The Coca-Cola Company (India)", nutriments:{"energy-kcal_100g":40,sugars_100g:10.0,fat_100g:0,salt_100g:0.03}, ingredients_text:"Carbonated Water, Sugar, Acidity Regulator (338), Caffeine, Natural Colour (150d), Flavours.", image_front_url:"", _price:"₹40", _weight:"250ml" },
+  "sprite": { product_name:"Sprite Lemon-Lime Clear", brands:"The Coca-Cola Company", nutriments:{"energy-kcal_100g":11.8 * 4,sugars_100g:11.8,fat_100g:0,salt_100g:0.01}, ingredients_text:"Carbonated Water, Sugar, Acidity Regulators (330, 331), Preservative (211), Flavours.", image_front_url:"", _price:"₹40", _weight:"250ml" },
+  "campa": { product_name:"Campa Cola", brands:"Reliance Consumer Products", nutriments:{"energy-kcal_100g":42,sugars_100g:10.5,fat_100g:0,salt_100g:0.02}, ingredients_text:"Carbonated Water, Sugar, Acidity Regulator (338), Caffeine, Colour (150d).", image_front_url:"", _price:"₹20", _weight:"200ml" },
+  "maggi": { product_name:"Maggi 2-Min Masala Noodles", brands:"Nestle India", nutriments:{"energy-kcal_100g":427,sugars_100g:2.2,fat_100g:15.7,salt_100g:3.2}, ingredients_text:"Wheat flour, Palm oil, Salt, Wheat gluten, Spices mix, Hydrolysed groundnut protein, MSG (E621), Acid regulator.", image_front_url:"https://images.openfoodfacts.org/images/products/890/182/610/0191/front_en.31.400.jpg", _price:"₹14", _weight:"70g" },
+  "oreo": { product_name:"Oreo Chocolate Biscuits", brands:"Mondelez International", nutriments:{"energy-kcal_100g":480,sugars_100g:38,fat_100g:20,salt_100g:0.9}, ingredients_text:"Wheat Flour, Sugar, Palmolein Oil, Cocoa Powder, Invert Sugar, Raising Agents, Salt, Emulsifier.", image_front_url:"https://images.openfoodfacts.org/images/products/762/221/044/9283/front_en.17.400.jpg", _price:"₹30", _weight:"120g" },
+  "kurkure": { product_name:"Kurkure Masala Munch", brands:"PepsiCo India", nutriments:{"energy-kcal_100g":558,sugars_100g:0.2,fat_100g:34.5,salt_100g:1.7}, ingredients_text:"Rice Meal, Corn Meal, Gram Meal, Edible Vegetable Oil (Palmolein Oil), Seasoning (Spices, Condiments, Salt, Sugar, MSG E621).", image_front_url:"https://images.openfoodfacts.org/images/products/890/106/336/3313/front_en.61.400.jpg", _price:"₹10", _weight:"40g" }
+};
+
+const harmfulDictionary = [
+  { keywords:[/palm oil/i,/palmolein/i], name:"Refined Palmolein Additives 🛢️", risk:"Highly structured lipid density. Promotes vascular blockage traits." },
+  { keywords:[/msg/i,/monosodium/i,/glutamate/i,/e621/i,/E621/], name:"Neuro-Taste Multiplier MSG (E621) 🧠", risk:"Forces artificial flavor overconsumption habits." },
+  { keywords:[/hydrogenated/i,/trans fat/i], name:"Mutated Trans Lipids ❌", risk:"Causes acute arterial strain indexes." },
+  { keywords:[/high fructose/i,/invert sugar/i,/maltodextrin/i], name:"High-GI Glycemic Agents ⚠️", risk:"Forces rapid insulin surges, compromising metabolic balance." },
+  { keywords:[/338/i,/phosphoric acid/i], name:"Phosphoric Acid (INS 338) 🧪", risk:"Can decay tooth enamel and drain bone calcium density." },
+  { keywords:[/caffeine/i], name:"Added Caffeine Stimulant ⚡", risk:"Can produce mild sleep disturbances if over-ingested." },
+  { keywords:[/sodium benzoate/i,/\(211\)/i], name:"Sodium Benzoate (E211) ☢️", risk:"May form benzene when combined with Vitamin C." }
+];
+
+const nutriDescs = { A:'Excellent Quality!', B:'Good Quality', C:'Okay Occasionally', D:'Poor Quality', E:'Avoid This One!' };
+
+/* ============================================================
+   GLOBAL CONTROLLER STATE
+   ============================================================ */
+let codeReader = null;
+let currentProduct = null;
+let compareSlots = [null, null];
+let historyList = JSON.parse(localStorage.getItem('bitelook_history')) || [];
+
+window.addEventListener('DOMContentLoaded', () => {
+  renderHistory();
+});
+
+/* ============================================================
+   ROUTING & UI VIEW MODES
+   ============================================================ */
+function setMode(m) {
+  document.getElementById('searchMode').classList.toggle('hidden', m !== 'search');
+  document.getElementById('compareMode').classList.toggle('hidden', m !== 'compare');
+  document.getElementById('tabSearch').classList.toggle('active', m === 'search');
+  document.getElementById('tabCompare').classList.toggle('active', m === 'compare');
+  if (m === 'compare') renderCompare();
+}
+
+/* ============================================================
+   CAMERA BARCODE CORE INTERACTION (ZXing Integration)
+   ============================================================ */
+async function startCamera() {
+  try {
+    if (typeof ZXing === 'undefined') { showToast('Scanner engine configuration failure.', true); return; }
+    
+    document.getElementById('placeholder').classList.add('hidden');
+    document.getElementById('video').classList.remove('hidden');
+    document.getElementById('scanOverlay').classList.remove('hidden');
+    document.getElementById('cameraBtn').classList.add('hidden');
+    document.getElementById('stopBtn').classList.remove('hidden');
+
+    if(!codeReader) {
+      codeReader = new ZXing.BrowserMultiFormatReader();
+    }
+
+    codeReader.decodeFromVideoDevice(null, 'video', (result, err) => {
+      if (result) {
+        showToast("Barcode Triggered: " + result.text, false);
+        stopCamera();
+        fetchFoodMetadata(result.text);
+      }
+      if (err && !(err instanceof ZXing.NotFoundException)) {
+        console.error(err);
+      }
+    });
+  } catch(e) {
+    showToast("Camera access access restricted/denied.", true);
+    stopCamera();
+  }
+}
+
+function stopCamera() {
+  if (codeReader) {
+    codeReader.reset();
+  }
+  document.getElementById('placeholder').classList.remove('hidden');
+  document.getElementById('video').classList.add('hidden');
+  document.getElementById('scanOverlay').classList.add('hidden');
+  document.getElementById('cameraBtn').classList.remove('hidden');
+  document.getElementById('stopBtn').classList.add('hidden');
+}
+
+/* ============================================================
+   CONTROLLER ENGINE FOR QUERIES / DISCOVERIES
+   ============================================================ */
+function quickSelect(key) {
+  document.getElementById('searchInput').value = key;
+  handleSearchInput();
+}
+
+function handleSearchInput() {
+  const query = document.getElementById('searchInput').value.trim();
+  if(!query) return;
+  fetchFoodMetadata(query);
+}
+
+/* ============================================================
+   DATA CAPTURE PIPELINE (Live API Fetch with Fallback)
+   ============================================================ */
+async function fetchFoodMetadata(targetString) {
+  hideAllLayouts();
+  showLoader(true);
+
+  // Structural check inside static layout
+  let matchKey = Object.keys(fallbackDatabase).find(k => k.toLowerCase() === targetString.toLowerCase());
+  
+  if (!matchKey && /^\d+$/.test(targetString)) {
+    // Attempting Open Food Facts Live Endpoint connectivity 
+    try {
+      let response = await fetch(`https://world.openfoodfacts.org/api/v2/product/${targetString}.json`);
+      if(response.ok) {
+        let resData = await response.json();
+        if(resData.status === 1 && resData.product) {
+          currentProduct = mapExternalModel(resData.product);
+          buildProductUI();
+          showLoader(false);
+          pushHistory(currentProduct);
+          return;
+        }
+      }
+    } catch(err) {
+      console.warn("Live gateway unresolvable. Testing fallback profile.");
+    }
+  }
+
+  // Handle local simulation matrix match
+  if(matchKey) {
+    setTimeout(() => {
+      currentProduct = fallbackDatabase[matchKey];
+      // Inject pseudo identifiers if lacking
+      if(!currentProduct.id) currentProduct.id = matchKey;
+      buildProductUI();
+      showLoader(false);
+      pushHistory(currentProduct);
+    }, 800);
+  } else {
+    // Terminate pipeline with structural warning
+    setTimeout(() => {
+      showLoader(false);
+      showToast("Snack configuration logs not found inside target pools.", true);
+    }, 600);
+  }
+}
+
+function mapExternalModel(p) {
+  return {
+    id: p._id || Date.now().toString(),
+    product_name: p.product_name || "Unidentified Snack",
+    brands: p.brands || "Unknown Manufacturing Matrix",
+    nutriments: {
+      "energy-kcal_100g": p.nutriments?.['energy-kcal_100g'] || p.nutriments?.['energy-kcal'] || 0,
+      sugars_100g: p.nutriments?.sugars_100g || p.nutriments?.sugars || 0,
+      fat_100g: p.nutriments?.fat_100g || p.nutriments?.fat || 0,
+      salt_100g: p.nutriments?.salt_100g || p.nutriments?.salt || 0
+    },
+    ingredients_text: p.ingredients_text || "No descriptive structural ledger configured.",
+    image_front_url: p.image_front_url || "",
+    _price: "₹" + (Math.floor(Math.random() * 40) + 10),
+    _weight: p.quantity || "100g"
+  };
+}
+
+/* ============================================================
+   ALGORITHMIC SCORING ENGINE (Dynamic Score System)
+   ============================================================ */
+function calculateLookGrade(m) {
+  let kcal = m["energy-kcal_100g"] || 0;
+  let sugar = m.sugars_100g || 0;
+  let fat = m.fat_100g || 0;
+  let salt = m.salt_100g || 0;
+
+  // Penalty calculus routine
+  let structuralDeficit = 0;
+  structuralDeficit += (kcal * 0.05);
+  structuralDeficit += (sugar * 3.5);
+  structuralDeficit += (fat * 1.5);
+  structuralDeficit += (salt * 8.0);
+
+  if (structuralDeficit < 25) return { grade: 'A', percent: 95, label: nutriDescs.A, color: '#00D26A' };
+  if (structuralDeficit < 60) return { grade: 'B', percent: 75, label: nutriDescs.B, color: '#86E3CE' };
+  if (structuralDeficit < 110) return { grade: 'C', percent: 55, label: nutriDescs.C, color: '#FFB300' };
+  if (structuralDeficit < 190) return { grade: 'D', percent: 35, label: nutriDescs.D, color: '#FF7844' };
+  return { grade: 'E', percent: 12, label: nutriDescs.E, color: '#FF1E56' };
+}
+
+/* ============================================================
+   UI VIEW COMPILER ENGINE
+   ============================================================ */
+function buildProductUI() {
+  if(!currentProduct) return;
+  
+  document.getElementById('productImg').src = currentProduct.image_front_url || noImgPlaceholder;
+  document.getElementById('productName').innerText = currentProduct.product_name;
+  document.getElementById('productBrand').innerText = currentProduct.brands || "Snack Matrix Inc.";
+  document.getElementById('productPrice').innerText = currentProduct._price || "₹20";
+  document.getElementById('productWeight').innerText = currentProduct._weight || "50g";
+
+  document.getElementById('servingSize').value = 100; // Normalizing reference target size
+  updateMacros();
+
+  // Evaluate Hazard signatures
+  const ingText = currentProduct.ingredients_text || "";
+  document.getElementById('ingredientsText').innerText = ingText;
+  
+  const targetWarningContainer = document.getElementById('warningList');
+  targetWarningContainer.innerHTML = "";
+  let threatFlag = false;
+
+  harmfulDictionary.forEach(node => {
+    let match = node.keywords.some(rx => rx.test(ingText));
+    if(match) {
+      threatFlag = true;
+      let card = document.createElement('div');
+      card.className = "hazard-card";
+      card.innerHTML = `<strong>${node.name}</strong><br>${node.risk}`;
+      targetWarningContainer.appendChild(card);
+    }
+  });
+
+  document.getElementById('harmfulContainer').style.display = threatFlag ? "block" : "none";
+  document.getElementById('productCard').style.display = "flex";
+}
+
+function updateMacros() {
+  if(!currentProduct) return;
+  
+  let scaleInput = parseFloat(document.getElementById('servingSize').value);
+  if (isNaN(scaleInput) || scaleInput <= 0) scaleInput = 100;
+  
+  let multiplier = scaleInput / 100;
+  let nut = currentProduct.nutriments;
+
+  let computedKcal = ((nut["energy-kcal_100g"] || 0) * multiplier).toFixed(0);
+  let computedSugar = ((nut.sugars_100g || 0) * multiplier).toFixed(1);
+  let computedFat = ((nut.fat_100g || 0) * multiplier).toFixed(1);
+  let computedSalt = ((nut.salt_100g || 0) * multiplier).toFixed(2);
+
+  document.getElementById('calories').innerText = computedKcal + " kcal";
+  document.getElementById('sugar').innerText = computedSugar + "g";
+  document.getElementById('fat').innerText = computedFat + "g";
+  document.getElementById('salt').innerText = computedSalt + "g";
+
+  // Progress fills calculation based on standard ceiling metrics
+  document.getElementById('barKcal').style.width = Math.min((computedKcal / 600) * 100, 100) + "%";
+  document.getElementById('barSugar').style.width = Math.min((computedSugar / 30) * 100, 100) + "%";
+  document.getElementById('barFat').style.width = Math.min((computedFat / 25) * 100, 100) + "%";
+  document.getElementById('barSalt').style.width = Math.min((computedSalt / 2) * 100, 100) + "%";
+
+  // Recalculate look indices dynamically
+  let scoreData = calculateLookGrade(nut);
+  
+  // Set Nutri-Score UI Elements
+  document.querySelectorAll('.ng').forEach(el => el.classList.remove('active'));
+  let gradeNode = document.getElementById('ng-' + scoreData.grade);
+  if(gradeNode) gradeNode.classList.add('active');
+  document.getElementById('nutriLabel').innerText = scoreData.label;
+
+  // Set Core Health Indicator status
+  let fillNode = document.getElementById('meterFill');
+  fillNode.style.width = scoreData.percent + "%";
+  fillNode.style.backgroundColor = scoreData.color;
+  
+  let badge = document.getElementById('healthBadge');
+  badge.innerText = `GRADE ${scoreData.grade} // ${scoreData.percent}% ENERGY MATRIX`;
+  badge.style.backgroundColor = scoreData.color;
+}
+
+function setServing(val) {
+  document.getElementById('servingSize').value = val;
+  updateMacros();
+}
+
+/* ============================================================
+   SIDE BY SIDE COMPARISON MATRIX ENGINE
+   ============================================================ */
+function addToCompare() {
+  if(!currentProduct) return;
+  
+  if (compareSlots[0] && compareSlots[0].product_name === currentProduct.product_name) {
+    showToast("Product already linked to Slot 1.", true); return;
+  }
+  if (compareSlots[1] && compareSlots[1].product_name === currentProduct.product_name) {
+    showToast("Product already linked to Slot 2.", true); return;
+  }
+
+  if(!compareSlots[0]) {
+    compareSlots[0] = currentProduct;
+    showToast("Snack locked in comparison slot 1!", false);
+  } else if(!compareSlots[1]) {
+    compareSlots[1] = currentProduct;
+    showToast("Snack locked in comparison slot 2!", false);
+  } else {
+    // Eviction routing sequence strategy
+    compareSlots[0] = compareSlots[1];
+    compareSlots[1] = currentProduct;
+    showToast("Slots cycled! Linked to structural slot 2.", false);
+  }
+}
+
+function renderCompare() {
+  for(let i=0; i<2; i++) {
+    let slotEl = document.getElementById(`slot${i}`);
+    let data = compareSlots[i];
+
+    if(!data) {
+      slotEl.className = "compare-slot";
+      slotEl.innerHTML = `<div class="compare-slot-empty-icon">🍽️</div>
+                          <div class="compare-slot-empty-txt">Slot ${i+1} Khali hai<br>Search karke add karo</div>`;
+    } else {
+      slotEl.className = "compare-slot filled";
+      let nut = data.nutriments;
+      slotEl.innerHTML = `
+        <div class="compare-prod-name">${data.product_name}</div>
+        <div class="compare-metric"><span class="c-lbl">Kcal:</span> <span>${(nut["energy-kcal_100g"]||0)}</span></div>
+        <div class="compare-metric"><span class="c-lbl">Sugar:</span> <span>${(nut.sugars_100g||0)}g</span></div>
+        <div class="compare-metric"><span class="c-lbl">Fat:</span> <span>${(nut.fat_100g||0)}g</span></div>
+        <div class="compare-metric"><span class="c-lbl">Salt:</span> <span>${(nut.salt_100g||0)}g</span></div>
+        <div class="compare-remove" onclick="removeSlot(${i}, event)">❌ Clear Slot</div>
+      `;
+    }
+  }
+
+  let resultBox = document.getElementById('compareResult');
+  resultBox.innerHTML = "";
+
+  if(compareSlots[0] && compareSlots[1]) {
+    let scoreA = calculateLookGrade(compareSlots[0].nutriments).percent;
+    let scoreB = calculateLookGrade(compareSlots[1].nutriments).percent;
+
+    if(scoreA > scoreB) {
+      resultBox.innerHTML = `<div class="compare-winner-bar">🏆 Winner: ${compareSlots[0].product_name} is healthier!</div>`;
+    } else if (scoreB > scoreA) {
+      resultBox.innerHTML = `<div class="compare-winner-bar">🏆 Winner: ${compareSlots[1].product_name} is healthier!</div>`;
+    } else {
+      resultBox.innerHTML = `<div class="compare-tie-bar">🤝 Structural Tie! Both snacks have equal indices.</div>`;
+    }
+  }
+}
+
+function removeSlot(index, event) {
+  event.stopPropagation();
+  compareSlots[index] = null;
+  renderCompare();
+}
+
+function resetCompare() {
+  compareSlots = [null, null];
+  renderCompare();
+  showToast("Comparison blocks completely cleared.", false);
+}
+
+/* ============================================================
+   DATA PERSISTENCE PIPELINE (LocalStorage Audit Interface)
+   ============================================================ */
+function pushHistory(item) {
+  if(!item) return;
+  historyList = historyList.filter(x => x.product_name !== item.product_name);
+  historyList.unshift(item);
+  if(historyList.length > 5) historyList.pop(); // Local bound clamp limits to 5 items
+  localStorage.setItem('bitelook_history', JSON.stringify(historyList));
+  renderHistory();
+}
+
+function renderHistory() {
+  const node = document.getElementById('historyListContainer');
+  node.innerHTML = "";
+  if(historyList.length === 0) {
+    node.innerHTML = `<div style="font-size:13px;color:var(--text-muted);font-weight:600;text-align:center;padding:10px 0">No records evaluated yet.</div>`;
+    return;
+  }
+  historyList.forEach(item => {
+    let row = document.createElement('div');
+    row.className = "hist-row";
+    let score = calculateLookGrade(item.nutriments);
+    row.innerHTML = `<span>${item.product_name}</span> <span style="color:${score.color}">Grade ${score.grade}</span>`;
+    row.onclick = () => {
+      currentProduct = item;
+      setMode('search');
+      buildProductUI();
+    };
+    node.appendChild(row);
+  });
+}
+
+function clearHistory() {
+  historyList = [];
+  localStorage.removeItem('bitelook_history');
+  renderHistory();
+  showToast("History wiped.", false);
+}
+
+/* ============================================================
+   SYSTEM UTILITY MODULES
+   ============================================================ */
+function showLoader(status) {
+  document.getElementById('loading').style.display = status ? "flex" : "none";
+}
+
+function hideAllLayouts() {
+  document.getElementById('productCard').style.display = "none";
+  document.getElementById('resultsGrid').style.display = "none";
+  document.getElementById('harmfulContainer').style.display = "none";
+}
+
+function showToast(msg, isAlert) {
+  let toast = document.getElementById('statusMsg');
+  toast.innerText = msg;
+  toast.style.display = "block";
+  toast.style.backgroundColor = isAlert ? "var(--score-bad)" : "#2D2727";
+  setTimeout(() => { toast.style.display = "none"; }, 3500);
+}
+</script>
+</body>
+</html>

@@ -449,34 +449,33 @@ function setMode(m) {
 /* ============================================================
    CAMERA BARCODE CORE INTERACTION (ZXing Integration)
    ============================================================ */
-async function startCamera() {
-  try {
-    if (typeof ZXing === 'undefined') { showToast('Scanner engine configuration failure.', true); return; }
-    
-    document.getElementById('placeholder').classList.add('hidden');
-    document.getElementById('video').classList.remove('hidden');
-    document.getElementById('scanOverlay').classList.remove('hidden');
-    document.getElementById('cameraBtn').classList.add('hidden');
-    document.getElementById('stopBtn').classList.remove('hidden');
+async function startCamera(){
+ try{
+  if(typeof ZXing==='undefined')return showToast('Scanner error',1)
 
-    if(!codeReader) {
-      codeReader = new ZXing.BrowserMultiFormatReader();
-    }
+  placeholder.classList.add('hidden')
+  video.classList.remove('hidden')
+  scanOverlay.classList.remove('hidden')
+  cameraBtn.classList.add('hidden')
+  stopBtn.classList.remove('hidden')
 
-    codeReader.decodeFromVideoDevice(null, 'video', (result, err) => {
-      if (result) {
-        showToast("Barcode Triggered: " + result.text, false);
-        stopCamera();
-        fetchFoodMetadata(result.text);
-      }
-      if (err && !(err instanceof ZXing.NotFoundException)) {
-        console.error(err);
-      }
-    });
-  } catch(e) {
-    showToast("Camera access access restricted/denied.", true);
-    stopCamera();
-  }
+  if(!codeReader)codeReader=new ZXing.BrowserMultiFormatReader()
+
+  await new Promise(r=>setTimeout(r,1200)) // autofocus warmup
+
+  codeReader.decodeFromVideoDevice(null,'video',(result,err)=>{
+   if(result){
+    navigator.vibrate?.(120)
+    showToast("Found: "+result.text)
+    stopCamera()
+    fetchFoodMetadata(result.text)
+   }
+  })
+
+ }catch(e){
+  showToast('Camera denied',1)
+  stopCamera()
+ }
 }
 
 function stopCamera() {
@@ -489,9 +488,7 @@ function stopCamera() {
   document.getElementById('cameraBtn').classList.remove('hidden');
   document.getElementById('stopBtn').classList.add('hidden');
 }
-
-/* ============================================================
-   CONTROLLER ENGINE FOR QUERIES / DISCOVERIES
+ ENGINE FOR QUERIES / DISCOVERIES
    ============================================================ */
 function quickSelect(key) {
   document.getElementById('searchInput').value = key;
@@ -569,6 +566,8 @@ function mapExternalModel(p) {
     _weight: p.quantity || "100g"
   };
 }
+/* ============================================================
+   CONTROLLER
 
 /* ============================================================
    ALGORITHMIC SCORING ENGINE (Dynamic Score System)

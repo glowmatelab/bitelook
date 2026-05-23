@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>BiteLook</title>
+<title>BiteLook // YUMMY FOOD HUD</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -13,7 +13,6 @@
     --text-muted: #6B6464;
     --color-primary: #FF3D68;
     --color-secondary: #FF8e00;
-    --color-accent: #00D7FF;
     --score-good: #00D26A;
     --score-warn: #FFB300;
     --score-bad: #FF1E56;
@@ -21,49 +20,54 @@
     --border-radius-main: 24px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  body { font-family: 'Fredoka', sans-serif; background: var(--bg-gradient); color: var(--text-dark); padding: 24px 16px; min-height: 100vh; position: relative; overflow-x: hidden; }
+  body { font-family: 'Fredoka', sans-serif; background: var(--bg-gradient); color: var(--text-dark); padding: 24px 16px; min-height: 100vh; overflow-x: hidden; }
 
-  .bg-emoji { position: fixed; font-size: 85px; opacity: 0.15; z-index: 0; pointer-events: none; filter: drop-shadow(0 6px 10px rgba(0,0,0,0.15)); animation: floatAround 8s infinite ease-in-out; }
-  .emoji-1 { top: 6%; left: -10px; transform: rotate(-15deg); }
-  .emoji-2 { top: 28%; right: -15px; transform: rotate(25deg); animation-delay: 1.5s; }
-  .emoji-3 { bottom: 20%; left: -10px; transform: rotate(10deg); animation-delay: 3s; }
-  .emoji-4 { bottom: 4%; right: -10px; transform: rotate(-20deg); animation-delay: 4.5s; }
-  @keyframes floatAround { 0%,100%{transform:translateY(0) rotate(0deg) scale(1);} 50%{transform:translateY(-20px) rotate(10deg) scale(1.05);} }
+  .bg-emoji { position: fixed; font-size: 85px; opacity: 0.15; z-index: 0; pointer-events: none; animation: floatAround 8s infinite ease-in-out; }
+  .emoji-1 { top: 6%; left: -10px; } .emoji-2 { top: 28%; right: -15px; animation-delay: 1.5s; }
+  .emoji-3 { bottom: 20%; left: -10px; animation-delay: 3s; } .emoji-4 { bottom: 4%; right: -10px; animation-delay: 4.5s; }
+  @keyframes floatAround { 0%,100%{transform:translateY(0) scale(1);} 50%{transform:translateY(-20px) scale(1.05);} }
 
   .app { max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; position: relative; z-index: 10; }
 
   .header { display: flex; align-items: center; justify-content: space-between; padding: 0 4px; }
-  .header .logo { font-size: 38px; font-weight: 700; color: #fff; text-shadow: 0 4px 0px rgba(0,0,0,0.2); letter-spacing: -0.5px; }
+  .header .logo { font-size: 38px; font-weight: 700; color: #fff; text-shadow: 0 4px 0px rgba(0,0,0,0.2); }
   .header .logo span { color: #FFDE4D; }
   .header .badge { font-size: 13px; font-weight: 700; background: #fff; padding: 6px 14px; border-radius: 50px; color: var(--color-primary); box-shadow: 0 6px 12px rgba(0,0,0,0.1); }
 
   .pop-card { background: var(--panel-bg); border-radius: var(--border-radius-main); padding: 22px; border: 3px solid #fff; box-shadow: var(--pop-shadow); }
 
-  /* ===== CAMERA SCANNER ===== */
-  .scanner-box { position: relative; height: 240px; border-radius: var(--border-radius-main); overflow: hidden; background: #FFFBF0; border: 4px solid #fff; box-shadow: 0 12px 24px rgba(0,0,0,0.12); }
-  #video { width: 100%; height: 100%; object-fit: cover; display: none; }
-
-  .placeholder-box { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
-  .placeholder-icon { width: 80px; height: 80px; background: #FFE9AE; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; border: 4px dashed #FF8e00; animation: popPulse 1.8s infinite ease-in-out; }
+  /* SCANNER */
+  .scanner-box { position: relative; height: 240px; border-radius: var(--border-radius-main); overflow: hidden; background: #111; border: 4px solid #fff; box-shadow: 0 12px 24px rgba(0,0,0,0.2); }
+  #video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .scanner-idle { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; background: #FFFBF0; }
+  .scanner-idle-icon { width: 80px; height: 80px; background: #FFE9AE; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; border: 4px dashed #FF8e00; animation: popPulse 1.8s infinite ease-in-out; }
   @keyframes popPulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.08);} }
-  .placeholder-box p { font-size: 20px; font-weight: 700; color: #FF8e00; }
-  .placeholder-box span { font-size: 13px; color: var(--text-muted); font-weight: 600; }
+  .scanner-idle p { font-size: 20px; font-weight: 700; color: #FF8e00; }
+  .scanner-idle span { font-size: 13px; color: var(--text-muted); font-weight: 600; }
 
-  .cam-permission-msg { font-size: 13px; color: var(--score-bad); font-weight: 700; text-align: center; padding: 8px 12px; background: #fff0f3; border-radius: 12px; margin-top: 8px; display: none; }
+  /* Scan overlay — corners only, cleaner look */
+  .scan-overlay { position: absolute; inset: 0; display: none; pointer-events: none; }
+  .scan-corner { position: absolute; width: 28px; height: 28px; border-color: #FF3D68; border-style: solid; }
+  .sc-tl { top: 28px; left: 28px; border-width: 4px 0 0 4px; border-radius: 6px 0 0 0; }
+  .sc-tr { top: 28px; right: 28px; border-width: 4px 4px 0 0; border-radius: 0 6px 0 0; }
+  .sc-bl { bottom: 28px; left: 28px; border-width: 0 0 4px 4px; border-radius: 0 0 0 6px; }
+  .sc-br { bottom: 28px; right: 28px; border-width: 0 4px 4px 0; border-radius: 0 0 6px 0; }
+  .scan-laser { position: absolute; left: 10%; width: 80%; height: 3px; background: linear-gradient(90deg, transparent, #FF3D68, transparent); border-radius: 4px; box-shadow: 0 0 10px #FF3D68; animation: laser 1.6s infinite ease-in-out; top: 50%; }
+  @keyframes laser { 0%{top:18%;opacity:1;} 50%{top:82%;opacity:1;} 100%{top:18%;opacity:1;} }
 
-  .scan-overlay { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; pointer-events: none; }
-  .scan-frame { width: 85%; height: 75%; border: 3px dashed var(--color-primary); border-radius: 18px; position: relative; }
-  .scan-frame::before { content: ''; position: absolute; width: 100%; height: 6px; background: var(--color-primary); top: 0; left: 0; border-radius: 10px; box-shadow: 0 0 12px var(--color-primary); animation: laserScan 2s infinite ease-in-out; }
-  @keyframes laserScan { 0%{top:0%;} 50%{top:90%;} 100%{top:0%;} }
+  .scan-pill { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.65); color: #fff; font-size: 13px; font-weight: 700; padding: 6px 16px; border-radius: 20px; white-space: nowrap; display: none; }
 
-  .scan-status-bar { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); color: white; font-size: 13px; font-weight: 700; padding: 6px 14px; border-radius: 20px; font-family: 'Fredoka', sans-serif; display: none; white-space: nowrap; }
+  /* detected flash */
+  .scan-flash { position: absolute; inset: 0; background: rgba(255,255,255,0.6); opacity: 0; pointer-events: none; transition: opacity 0.08s; border-radius: var(--border-radius-main); }
+  .scan-flash.pop { opacity: 1; }
 
-  .btn { width: 100%; padding: 18px; border-radius: 20px; border: none; font-size: 19px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: transform 0.2s cubic-bezier(0.175,0.885,0.32,1.275); background: #fff; color: var(--color-primary); font-family: 'Fredoka', sans-serif; }
-  .btn:hover { transform: scale(1.02); }
-  .btn:active { transform: scale(0.97); }
+  .cam-err { font-size: 13px; color: var(--score-bad); font-weight: 700; text-align: center; padding: 8px 12px; background: #fff0f3; border-radius: 12px; margin-top: 8px; display: none; }
+
+  .btn { width: 100%; padding: 18px; border-radius: 20px; border: none; font-size: 19px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: transform 0.15s; font-family: 'Fredoka', sans-serif; }
+  .btn:active { transform: scale(0.96); }
   .btn-launch { background: #FF3D68; color: white; box-shadow: 0 8px 0px #B81438; border: 2px solid #fff; }
   .btn-launch:active { box-shadow: 0 2px 0px #B81438; transform: translateY(6px); }
-  .btn-launch:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  .btn-launch:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: 0 8px 0px #B81438; }
   .btn-stop { background: #2D2727; color: white; box-shadow: 0 6px 0px #000; border: 2px solid #fff; }
 
   .mode-tabs { display: flex; background: rgba(255,255,255,0.3); border-radius: 16px; padding: 4px; gap: 4px; }
@@ -72,123 +76,115 @@
 
   .section-label { font-size: 16px; color: var(--color-primary); font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
 
-  .search-wrapper { display: flex; background: #FFF3F3; border-radius: 18px; padding: 6px; border: 3px solid #FFE3E3; transition: all 0.3s ease; }
+  .search-wrapper { display: flex; background: #FFF3F3; border-radius: 18px; padding: 6px; border: 3px solid #FFE3E3; }
   .search-wrapper input { flex: 1; border: none; background: transparent; padding: 0 12px; font-size: 16px; font-weight: 600; color: var(--text-dark); outline: none; font-family: 'Fredoka', sans-serif; }
   .search-wrapper input::placeholder { color: #BBB4B4; }
-  .search-wrapper button { background: var(--color-primary); color: white; border: none; padding: 10px 22px; border-radius: 14px; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 3px 0px #B81438; font-family: 'Fredoka', sans-serif; transition: opacity 0.2s; }
+  .search-wrapper button { background: var(--color-primary); color: white; border: none; padding: 10px 22px; border-radius: 14px; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 3px 0px #B81438; font-family: 'Fredoka', sans-serif; }
   .search-wrapper button:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-  .chip { padding: 8px 14px; border-radius: 14px; background: #fff; border: 2px solid #FFE3E3; font-size: 14px; font-weight: 600; color: var(--text-dark); cursor: pointer; transition: all 0.2s; }
+  .chip { padding: 8px 14px; border-radius: 14px; background: #fff; border: 2px solid #FFE3E3; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
   .chip:hover { border-color: var(--color-primary); color: var(--color-primary); transform: scale(1.04); }
 
-  /* ===== LOADER ===== */
-  .loader { display: none; flex-direction: column; align-items: center; justify-content: center; padding: 30px 0; gap: 15px; }
-  .pan-container { position: relative; width: 120px; height: 120px; animation: panFlip 1.4s infinite ease-in-out; }
-  .pan-base { position: absolute; width: 70px; height: 70px; background: #333; border-radius: 50%; bottom: 20px; left: 10px; border: 4px solid #444; }
-  .pan-handle { position: absolute; width: 50px; height: 12px; background: #555; border-radius: 6px; bottom: 50px; right: 5px; transform: rotate(-15deg); }
-  .egg-omlet { position: absolute; width: 42px; height: 36px; background: #fff; border-radius: 50% 40% 50% 45%; top: 35px; left: 24px; animation: eggJump 1.4s infinite ease-in-out; }
-  .egg-yolk { position: absolute; width: 16px; height: 16px; background: #FFB300; border-radius: 50%; top: 10px; left: 13px; }
-  @keyframes panFlip { 0%,100%{transform:rotate(0deg);} 30%{transform:rotate(-10deg) translateY(5px);} 60%{transform:rotate(12deg) translateY(-8px);} }
-  @keyframes eggJump { 0%,100%{transform:translateY(0) scaleY(1);} 40%{transform:translateY(-45px) rotate(40deg) scaleY(0.9);} 70%{transform:translateY(0) scaleY(1.1);} }
-  .loader p { font-size: 16px; color: #fff; font-weight: 700; text-shadow: 0 2px 6px rgba(0,0,0,0.2); }
-  .loader-sub { font-size: 13px; color: rgba(255,255,255,0.8); font-weight: 600; }
+  /* LOADER */
+  .loader { display: none; flex-direction: column; align-items: center; padding: 30px 0; gap: 14px; }
+  .pan-container { position: relative; width: 100px; height: 100px; animation: panFlip 1.2s infinite ease-in-out; }
+  .pan-base { position: absolute; width: 60px; height: 60px; background: #333; border-radius: 50%; bottom: 16px; left: 10px; border: 4px solid #444; }
+  .pan-handle { position: absolute; width: 44px; height: 10px; background: #555; border-radius: 6px; bottom: 42px; right: 4px; transform: rotate(-15deg); }
+  .egg-omlet { position: absolute; width: 38px; height: 32px; background: #fff; border-radius: 50% 40% 50% 45%; top: 28px; left: 20px; animation: eggJump 1.2s infinite ease-in-out; }
+  .egg-yolk { position: absolute; width: 14px; height: 14px; background: #FFB300; border-radius: 50%; top: 8px; left: 12px; }
+  @keyframes panFlip { 0%,100%{transform:rotate(0deg);} 30%{transform:rotate(-10deg) translateY(4px);} 60%{transform:rotate(12deg) translateY(-6px);} }
+  @keyframes eggJump { 0%,100%{transform:translateY(0);} 40%{transform:translateY(-38px) rotate(35deg);} 70%{transform:translateY(0) scaleY(1.1);} }
+  .loader-text { font-size: 15px; color: #fff; font-weight: 700; text-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+  .loader-sub { font-size: 12px; color: rgba(255,255,255,0.8); font-weight: 600; }
 
-  /* ===== SEARCH RESULTS ===== */
+  /* SEARCH RESULTS */
   .results-grid { display: none; flex-direction: column; margin-top: 10px; }
   .search-list { display: flex; flex-direction: column; gap: 8px; }
-  .search-item { display: flex; align-items: center; gap: 14px; padding: 12px; border-radius: 16px; background: #FFFBF0; border: 2px solid #FFEFAF; cursor: pointer; transition: border-color 0.2s; }
+  .search-item { display: flex; align-items: center; gap: 14px; padding: 12px; border-radius: 16px; background: #FFFBF0; border: 2px solid #FFEFAF; cursor: pointer; transition: border-color 0.15s; }
   .search-item:hover { border-color: var(--color-secondary); }
-  .search-item img { width: 50px; height: 50px; object-fit: contain; border-radius: 12px; background: #fff; padding: 2px; border: 1px solid #FFEFAF; flex-shrink: 0; }
+  .search-item img { width: 50px; height: 50px; object-fit: contain; border-radius: 12px; background: #fff; border: 1px solid #FFEFAF; flex-shrink: 0; }
   .search-item-info { flex: 1; min-width: 0; }
-  .search-item-name { font-size: 14px; font-weight: 700; color: var(--text-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .search-item-name { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .search-item-brand { font-size: 12px; color: var(--text-muted); font-weight: 600; margin-top: 2px; }
   .search-item-grade { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 8px; color: white; flex-shrink: 0; }
 
-  /* ===== PRODUCT DETAIL ===== */
-  .product-layout { display: none; flex-direction: column; margin-top: 10px; animation: popIn 0.3s cubic-bezier(0.175,0.885,0.32,1.275); }
-  @keyframes popIn { from{transform:scale(0.96);opacity:0;} to{transform:scale(1);opacity:1;} }
-
+  /* PRODUCT */
+  .product-layout { display: none; flex-direction: column; margin-top: 10px; animation: popIn 0.25s ease-out; }
+  @keyframes popIn { from{transform:scale(0.97);opacity:0;} to{transform:scale(1);opacity:1;} }
   .meta-panel { display: flex; gap: 16px; align-items: center; padding-bottom: 16px; border-bottom: 3px dashed #FFE3E3; }
   .prod-img { width: 90px; height: 90px; object-fit: contain; border-radius: 18px; background: white; padding: 4px; border: 2px solid #FFE3E3; flex-shrink: 0; }
-  .prod-title { font-size: 22px; font-weight: 700; color: var(--text-dark); line-height: 1.2; }
+  .prod-title { font-size: 20px; font-weight: 700; line-height: 1.2; }
   .prod-sub { font-size: 14px; color: var(--text-muted); font-weight: 600; margin-top: 2px; }
   .prod-tags { display: flex; gap: 8px; margin-top: 8px; font-size: 13px; font-weight: 700; flex-wrap: wrap; }
   .tag-price { color: white; background: var(--color-primary); padding: 3px 10px; border-radius: 8px; }
   .tag-wt { background: #FFF3F3; padding: 3px 10px; border-radius: 8px; color: var(--color-primary); }
-  .btn-add-compare { background: #FFDE4D; color: #2D2727; border: none; padding: 6px 14px; border-radius: 10px; font-family: 'Fredoka', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .2s; box-shadow: 0 3px 0 #D9B300; margin-top: 10px; display: inline-block; }
-  .btn-add-compare:hover { background: #FFB300; transform: scale(1.04); }
+  .api-badge { font-size: 11px; font-weight: 700; background: #E6FCFF; color: #007A5E; padding: 3px 8px; border-radius: 8px; border: 1px solid #BCEEBF; }
+  .offline-badge { font-size: 11px; font-weight: 700; background: #FFF9E6; color: #7A5A00; padding: 3px 8px; border-radius: 8px; border: 1px solid #FFE8A0; }
+  .btn-add-compare { background: #FFDE4D; color: #2D2727; border: none; padding: 6px 14px; border-radius: 10px; font-family: 'Fredoka', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 3px 0 #D9B300; margin-top: 10px; }
   .btn-add-compare:active { transform: scale(.97); box-shadow: 0 1px 0 #D9B300; }
 
   .nutri-section { margin: 16px 0; }
   .nutri-row { display: flex; gap: 6px; align-items: flex-end; }
   .ng { border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; width: 36px; height: 36px; transition: transform .2s; opacity: .25; }
   .ng.active { transform: scale(1.3); opacity: 1; z-index: 1; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
-  .ng-a { background: #27500A; color: #EAF3DE; }
-  .ng-b { background: #639922; color: #EAF3DE; }
-  .ng-c { background: #BA7517; color: #FAEEDA; }
-  .ng-d { background: #A32D2D; color: #FCEBEB; }
-  .ng-e { background: #501313; color: #FCEBEB; }
-  .nutri-label { font-size: 14px; color: var(--text-dark); font-weight: 700; margin-left: 14px; align-self: center; background: #FFF3F3; padding: 4px 10px; border-radius: 8px; border: 1px solid #FFE3E3; }
+  .ng-a{background:#27500A;color:#EAF3DE;} .ng-b{background:#639922;color:#EAF3DE;} .ng-c{background:#BA7517;color:#FAEEDA;} .ng-d{background:#A32D2D;color:#FCEBEB;} .ng-e{background:#501313;color:#FCEBEB;}
+  .nutri-label { font-size: 14px; font-weight: 700; margin-left: 14px; align-self: center; background: #FFF3F3; padding: 4px 10px; border-radius: 8px; border: 1px solid #FFE3E3; }
 
   .serving-section { margin: 14px 0; background: #FFF3F3; border-radius: 16px; padding: 14px; border: 2px solid #FFE3E3; }
   .serving-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .serving-row label { font-size: 14px; color: var(--text-muted); font-weight: 700; white-space: nowrap; }
-  .serving-row input[type=number] { width: 72px; padding: 8px 10px; font-size: 15px; font-family: 'Fredoka', sans-serif; font-weight: 700; border: 2px solid #FFD6D6; border-radius: 10px; background: white; color: var(--text-dark); outline: none; }
+  .serving-row label { font-size: 14px; color: var(--text-muted); font-weight: 700; }
+  .serving-row input[type=number] { width: 72px; padding: 8px 10px; font-size: 15px; font-family: 'Fredoka', sans-serif; font-weight: 700; border: 2px solid #FFD6D6; border-radius: 10px; background: white; outline: none; }
   .serving-row input[type=number]:focus { border-color: var(--color-primary); }
   .serving-presets { display: flex; gap: 6px; flex-wrap: wrap; }
-  .preset-btn { padding: 6px 12px; border-radius: 10px; background: white; border: 2px solid #FFE3E3; font-family: 'Fredoka', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; color: var(--text-dark); transition: all .15s; }
+  .preset-btn { padding: 6px 12px; border-radius: 10px; background: white; border: 2px solid #FFE3E3; font-family: 'Fredoka', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .15s; }
   .preset-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
 
   .macro-display { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin: 14px 0; }
   .macro-node { background: #FFF8F8; border-radius: 16px; padding: 12px 2px; text-align: center; border: 2px solid #FFEAE9; }
   .macro-title { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
-  .macro-data { font-size: 14px; font-weight: 700; margin-top: 4px; color: var(--text-dark); }
-  .macro-bar { height: 4px; background: #FFE3E3; border-radius: 4px; overflow: hidden; margin-top: 6px; width: 80%; margin-left: auto; margin-right: auto; }
-  .macro-bar-fill { height: 100%; border-radius: 4px; transition: width .6s; width: 0%; }
+  .macro-data { font-size: 14px; font-weight: 700; margin-top: 4px; }
+  .macro-bar { height: 4px; background: #FFE3E3; border-radius: 4px; overflow: hidden; margin: 6px auto 0; width: 80%; }
+  .macro-bar-fill { height: 100%; border-radius: 4px; transition: width .5s; width: 0%; }
 
   .score-section { margin: 18px 0; }
   .bar-track { height: 16px; background: #FFF3F3; border-radius: 50px; overflow: hidden; margin-top: 8px; border: 2px solid #FFE3E3; }
-  .bar-progress { height: 100%; width: 0%; transition: width 0.8s ease-out; border-radius: 50px; }
-  .score-badge { display: inline-flex; align-items: center; padding: 8px 16px; border-radius: 50px; font-size: 14px; font-weight: 700; margin-top: 10px; box-shadow: 0 4px 0px rgba(0,0,0,0.05); color: white; }
+  .bar-progress { height: 100%; width: 0%; transition: width 0.7s ease-out; border-radius: 50px; }
+  .score-badge { display: inline-flex; align-items: center; padding: 8px 16px; border-radius: 50px; font-size: 14px; font-weight: 700; margin-top: 10px; color: white; }
 
-  .ingredients-box { font-size: 14px; color: var(--text-dark); background: #FFFBF0; padding: 16px; border-radius: 18px; line-height: 1.5; font-weight: 500; border: 2px solid #FFEFAF; max-height: 120px; overflow-y: auto; }
+  .ingredients-box { font-size: 14px; background: #FFFBF0; padding: 16px; border-radius: 18px; line-height: 1.5; font-weight: 500; border: 2px solid #FFEFAF; max-height: 120px; overflow-y: auto; }
   .hazard-panel { background: #FFF0F3; border-radius: 20px; padding: 18px; margin-top: 18px; border: 2px solid #FFD1DC; }
   .hazard-header { font-size: 15px; font-weight: 700; color: var(--score-bad); margin-bottom: 12px; }
   .hazard-card { font-size: 13px; color: #5F1A2B; background: #fff; padding: 12px; border-radius: 12px; margin-bottom: 8px; border: 1px solid #FFD1DC; line-height: 1.4; }
   .hazard-card:last-child { margin-bottom: 0; }
 
-  /* ===== COMPARE ===== */
+  /* COMPARE */
   .compare-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
   .compare-slot { background: #FFFBF0; border: 2px dashed #FFEFAF; border-radius: 18px; padding: 14px; min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 6px; }
   .compare-slot.filled { align-items: stretch; justify-content: flex-start; text-align: left; border-style: solid; border-color: #FFD6D6; background: white; }
   .compare-slot-empty-icon { font-size: 28px; }
   .compare-slot-empty-txt { font-size: 13px; font-weight: 700; color: var(--text-muted); }
-  .compare-prod-name { font-size: 14px; font-weight: 700; color: var(--text-dark); line-height: 1.3; margin-bottom: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .compare-prod-name { font-size: 13px; font-weight: 700; line-height: 1.3; margin-bottom: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .compare-metric { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; padding: 5px 0; border-bottom: 1px dashed #FFE3E3; }
   .compare-metric:last-of-type { border-bottom: none; }
   .c-lbl { color: var(--text-muted); }
-  .c-win { color: #00D26A; font-weight: 700; }
-  .c-lose { color: #FF1E56; font-weight: 700; }
   .compare-remove { font-size: 12px; color: var(--color-primary); cursor: pointer; margin-top: auto; font-weight: 700; text-align: center; padding-top: 6px; }
   .compare-winner-bar { text-align: center; padding: 14px; background: #E6FCFF; border-radius: 16px; font-size: 15px; font-weight: 700; color: #007A5E; border: 2px solid #BCEEBF; margin-top: 10px; }
   .compare-tie-bar { text-align: center; padding: 14px; background: #FFF9E6; border-radius: 16px; font-size: 15px; font-weight: 700; color: #7A5A00; border: 2px solid #FFE8A0; margin-top: 10px; }
-  .btn-compare-reset { width: 100%; padding: 12px; border-radius: 14px; border: 2px solid #FFE3E3; background: white; font-family: 'Fredoka', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; color: var(--text-muted); margin-top: 10px; transition: all .2s; }
+  .btn-compare-reset { width: 100%; padding: 12px; border-radius: 14px; border: 2px solid #FFE3E3; background: white; font-family: 'Fredoka', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; color: var(--text-muted); margin-top: 10px; }
   .btn-compare-reset:hover { border-color: var(--color-primary); color: var(--color-primary); }
 
-  /* ===== HISTORY ===== */
+  /* HISTORY */
   .history-panel { display: flex; flex-direction: column; gap: 12px; margin-top: 15px; }
   .history-top { display: flex; justify-content: space-between; align-items: center; }
-  .btn-clear { font-size: 13px; color: var(--text-muted); font-weight: 700; cursor: pointer; background: none; border: none; font-family: 'Fredoka', sans-serif; outline: none; }
+  .btn-clear { font-size: 13px; color: var(--text-muted); font-weight: 700; cursor: pointer; background: none; border: none; font-family: 'Fredoka', sans-serif; }
   .btn-clear:hover { color: var(--color-primary); }
-  .hist-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: #FFF3F3; border-radius: 16px; font-size: 14px; cursor: pointer; border: 2px solid #FFE3E3; font-weight: 600; margin-bottom: 6px; transition: all 0.2s; }
+  .hist-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: #FFF3F3; border-radius: 16px; font-size: 14px; cursor: pointer; border: 2px solid #FFE3E3; font-weight: 600; margin-bottom: 6px; transition: all 0.15s; }
   .hist-row:hover { border-color: var(--color-primary); background: #fff; }
   .hist-row:last-child { margin-bottom: 0; }
 
-  .status-toast { text-align: center; font-size: 14px; padding: 12px; border-radius: 14px; display: none; font-weight: 700; background: #2D2727; color: white; margin-top: 10px; }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #2D2727; color: white; font-size: 14px; font-weight: 700; padding: 12px 20px; border-radius: 16px; display: none; z-index: 999; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,0.3); font-family: 'Fredoka', sans-serif; }
   .hidden { display: none !important; }
-  .api-badge { font-size: 11px; font-weight: 700; background: #E6FCFF; color: #007A5E; padding: 3px 8px; border-radius: 8px; border: 1px solid #BCEEBF; margin-left: 6px; vertical-align: middle; }
-  .offline-badge { font-size: 11px; font-weight: 700; background: #FFF9E6; color: #7A5A00; padding: 3px 8px; border-radius: 8px; border: 1px solid #FFE8A0; margin-left: 6px; vertical-align: middle; }
 </style>
 </head>
 <body>
@@ -197,11 +193,12 @@
 <div class="bg-emoji emoji-2">🍔</div>
 <div class="bg-emoji emoji-3">🍟</div>
 <div class="bg-emoji emoji-4">🍳</div>
+<div class="toast" id="toast"></div>
 
 <div class="app">
   <div class="header">
     <div class="logo">Bite<span>Look</span></div>
-    <div class="badge">TESTING MODE 🍳</div>
+    <div class="badge">HUD MODE 🍳</div>
   </div>
 
   <div class="mode-tabs">
@@ -209,85 +206,88 @@
     <button class="mode-tab" id="tabCompare" onclick="setMode('compare')">⚖️ Compare</button>
   </div>
 
-  <!-- ===== SEARCH MODE ===== -->
   <div id="searchMode">
-    <div class="scanner-box">
-      <div class="placeholder-box" id="placeholder">
-        <div class="placeholder-icon">📸</div>
+    <!-- SCANNER BOX -->
+    <div class="scanner-box" id="scannerBox">
+      <div class="scanner-idle" id="scannerIdle">
+        <div class="scanner-idle-icon">📸</div>
         <p>SCAN TIME! 🍕</p>
         <span>Point at any Snack Barcode</span>
       </div>
-      <video id="video" autoplay playsinline muted></video>
+      <video id="video" autoplay playsinline muted style="display:none;width:100%;height:100%;object-fit:cover;"></video>
       <div class="scan-overlay" id="scanOverlay">
-        <div class="scan-frame"></div>
+        <div class="scan-corner sc-tl"></div>
+        <div class="scan-corner sc-tr"></div>
+        <div class="scan-corner sc-bl"></div>
+        <div class="scan-corner sc-br"></div>
+        <div class="scan-laser"></div>
       </div>
-      <div class="scan-status-bar" id="scanStatusBar">🔍 Barcode dhoondh raha hoon...</div>
+      <div class="scan-pill" id="scanPill">🔍 Scanning...</div>
+      <div class="scan-flash" id="scanFlash"></div>
     </div>
-    <div class="cam-permission-msg" id="camPermMsg">📵 Camera permission denied. Browser settings mein allow karo.</div>
+    <div class="cam-err" id="camErr"></div>
 
-    <div style="margin-top: 10px;">
+    <div style="margin-top:10px;">
       <button class="btn btn-launch" id="cameraBtn" onclick="startCamera()">LAUNCH SCANNER 🚀</button>
-      <button class="btn btn-stop hidden" id="stopBtn" onclick="stopCamera()">CLOSE CAMERA ❌</button>
+      <button class="btn btn-stop hidden" id="stopBtn" onclick="stopCamera()">STOP SCANNER ❌</button>
     </div>
 
-    <div class="pop-card" style="margin-top: 15px;">
+    <div class="pop-card" style="margin-top:15px;">
       <div class="section-label">Quick Search Console</div>
-      <div class="search-wrapper" id="searchWrapperNode">
-        <input type="text" id="searchInput" placeholder="Type snack name or barcode..." onkeydown="if(event.key==='Enter')handleSearchInput()"/>
-        <button id="searchBtn" onclick="handleSearchInput()">FIND</button>
+      <div class="search-wrapper">
+        <input type="text" id="searchInput" placeholder="Type snack name or barcode..." onkeydown="if(event.key==='Enter')doSearch()"/>
+        <button id="searchBtn" onclick="doSearch()">FIND</button>
       </div>
       <div class="chips">
-        <span class="chip" onclick="quickSelect('unclechips')">🍟 Uncle Chips</span>
-        <span class="chip" onclick="quickSelect('sprite')">🍋 Sprite</span>
-        <span class="chip" onclick="quickSelect('thumsup')">🥤 Thums Up</span>
-        <span class="chip" onclick="quickSelect('cocacola')">🔴 Coca-Cola</span>
-        <span class="chip" onclick="quickSelect('campa')">🍊 Campa Cola</span>
-        <span class="chip" onclick="quickSelect('maggi')">🍜 Maggi</span>
-        <span class="chip" onclick="quickSelect('oreo')">🍪 Oreo</span>
-        <span class="chip" onclick="quickSelect('kurkure')">🌶️ Kurkure</span>
+        <span class="chip" onclick="quickSearch('unclechips')">🍟 Uncle Chips</span>
+        <span class="chip" onclick="quickSearch('sprite')">🍋 Sprite</span>
+        <span class="chip" onclick="quickSearch('thumsup')">🥤 Thums Up</span>
+        <span class="chip" onclick="quickSearch('cocacola')">🔴 Coca-Cola</span>
+        <span class="chip" onclick="quickSearch('campa')">🍊 Campa Cola</span>
+        <span class="chip" onclick="quickSearch('maggi')">🍜 Maggi</span>
+        <span class="chip" onclick="quickSearch('oreo')">🍪 Oreo</span>
+        <span class="chip" onclick="quickSearch('kurkure')">🌶️ Kurkure</span>
       </div>
     </div>
 
-    <div class="status-toast" id="statusMsg"></div>
-
-    <div class="loader" id="loading">
+    <!-- LOADER -->
+    <div class="loader" id="loader">
       <div class="pan-container">
-        <div class="pan-base"></div>
-        <div class="pan-handle"></div>
+        <div class="pan-base"></div><div class="pan-handle"></div>
         <div class="egg-omlet"><div class="egg-yolk"></div></div>
       </div>
-      <p id="loaderText">Cooking Food DNA Logs... 🍳🔥</p>
-      <span class="loader-sub" id="loaderSub">API se data fetch ho raha hai</span>
+      <div class="loader-text" id="loaderText">Searching...</div>
+      <div class="loader-sub" id="loaderSub">Checking database</div>
     </div>
 
+    <!-- SEARCH RESULTS -->
     <div class="pop-card results-grid" id="resultsGrid">
-      <div class="section-label">Discovered Food Matches</div>
+      <div class="section-label">Select a Product</div>
       <div class="search-list" id="searchList"></div>
     </div>
 
+    <!-- PRODUCT CARD -->
     <div class="pop-card product-layout" id="productCard">
       <div class="meta-panel">
-        <img src="" class="prod-img" id="productImg" alt="Food Item" onerror="this.src=noImgPlaceholder;">
+        <img class="prod-img" id="productImg" src="" alt="" onerror="this.src=NOIMG">
         <div style="flex:1;min-width:0;">
           <div class="prod-title" id="productName">---</div>
           <div class="prod-sub" id="productBrand">---</div>
           <div class="prod-tags">
             <span class="tag-price" id="productPrice">₹--</span>
             <span class="tag-wt" id="productWeight">--</span>
-            <span id="dataSourceBadge"></span>
+            <span id="srcBadge"></span>
           </div>
-          <button class="btn-add-compare" onclick="addToCompare()">+ Compare Me ⚖️</button>
+          <button class="btn-add-compare" onclick="addToCompare()">+ Compare ⚖️</button>
         </div>
       </div>
 
       <div class="nutri-section">
         <div class="section-label">Nutri-Score 🏅</div>
-        <div style="display:flex;align-items:center">
+        <div style="display:flex;align-items:center;">
           <div class="nutri-row">
-            <div class="ng ng-a" id="ng-A">A</div>
-            <div class="ng ng-b" id="ng-B">B</div>
-            <div class="ng ng-c" id="ng-C">C</div>
-            <div class="ng ng-d" id="ng-D">D</div>
+            <div class="ng ng-a" id="ng-A">A</div><div class="ng ng-b" id="ng-B">B</div>
+            <div class="ng ng-c" id="ng-C">C</div><div class="ng ng-d" id="ng-D">D</div>
             <div class="ng ng-e" id="ng-E">E</div>
           </div>
           <div class="nutri-label" id="nutriLabel">---</div>
@@ -295,11 +295,11 @@
       </div>
 
       <div class="serving-section">
-        <div class="section-label" style="margin-bottom:10px">Serving Calculator 🍽️</div>
+        <div class="section-label" style="margin-bottom:10px;">Serving Calculator 🍽️</div>
         <div class="serving-row">
           <label>Size:</label>
-          <input type="number" id="servingSize" min="1" max="2000" value="100" step="1" oninput="updateMacros()"/>
-          <span style="font-size:14px;font-weight:700;color:var(--text-muted)">g / ml</span>
+          <input type="number" id="servingSize" min="1" max="2000" value="100" oninput="updateMacros()"/>
+          <span style="font-size:14px;font-weight:700;color:var(--text-muted);">g / ml</span>
         </div>
         <div class="serving-presets">
           <button class="preset-btn" onclick="setServing(30)">30g</button>
@@ -312,30 +312,14 @@
       </div>
 
       <div class="macro-display">
-        <div class="macro-node">
-          <div class="macro-title">Calories</div>
-          <div class="macro-data" id="calories">—</div>
-          <div class="macro-bar"><div class="macro-bar-fill" id="barKcal" style="background:#FF3D68"></div></div>
-        </div>
-        <div class="macro-node">
-          <div class="macro-title">Sugar</div>
-          <div class="macro-data" id="sugar">—</div>
-          <div class="macro-bar"><div class="macro-bar-fill" id="barSugar" style="background:#FF8e00"></div></div>
-        </div>
-        <div class="macro-node">
-          <div class="macro-title">Fat</div>
-          <div class="macro-data" id="fat">—</div>
-          <div class="macro-bar"><div class="macro-bar-fill" id="barFat" style="background:#FF3D68"></div></div>
-        </div>
-        <div class="macro-node">
-          <div class="macro-title">Salt</div>
-          <div class="macro-data" id="salt">—</div>
-          <div class="macro-bar"><div class="macro-bar-fill" id="barSalt" style="background:#534AB7"></div></div>
-        </div>
+        <div class="macro-node"><div class="macro-title">Calories</div><div class="macro-data" id="mKcal">—</div><div class="macro-bar"><div class="macro-bar-fill" id="bKcal" style="background:#FF3D68"></div></div></div>
+        <div class="macro-node"><div class="macro-title">Sugar</div><div class="macro-data" id="mSugar">—</div><div class="macro-bar"><div class="macro-bar-fill" id="bSugar" style="background:#FF8e00"></div></div></div>
+        <div class="macro-node"><div class="macro-title">Fat</div><div class="macro-data" id="mFat">—</div><div class="macro-bar"><div class="macro-bar-fill" id="bFat" style="background:#FF3D68"></div></div></div>
+        <div class="macro-node"><div class="macro-title">Salt</div><div class="macro-data" id="mSalt">—</div><div class="macro-bar"><div class="macro-bar-fill" id="bSalt" style="background:#534AB7"></div></div></div>
       </div>
 
       <div class="score-section">
-        <div class="section-label">Health Power Status</div>
+        <div class="section-label">Health Status</div>
         <div class="bar-track"><div class="bar-progress" id="meterFill"></div></div>
         <div class="score-badge" id="healthBadge">---</div>
       </div>
@@ -345,107 +329,91 @@
         <div class="ingredients-box" id="ingredientsText">---</div>
       </div>
 
-      <div class="hazard-panel" id="harmfulContainer" style="display:none">
-        <div class="hazard-header">⚠️ Warning: Chemical Red Flags!</div>
+      <div class="hazard-panel hidden" id="harmfulContainer">
+        <div class="hazard-header">⚠️ Chemical Red Flags!</div>
         <div id="warningList"></div>
       </div>
     </div>
 
-    <div class="pop-card history-panel" id="historyBoxPanel">
+    <!-- HISTORY -->
+    <div class="pop-card history-panel" id="historyPanel">
       <div class="history-top">
-        <div class="section-label" style="margin:0">Recent Scans</div>
+        <div class="section-label" style="margin:0;">Recent Scans</div>
         <button class="btn-clear" onclick="clearHistory()">Clear All</button>
       </div>
-      <div id="historyListContainer"></div>
+      <div id="historyList"></div>
     </div>
   </div>
 
-  <!-- ===== COMPARE MODE ===== -->
+  <!-- COMPARE MODE -->
   <div id="compareMode" class="hidden">
     <div class="pop-card">
-      <div class="section-label">Side-by-Side Comparison ⚖️</div>
-      <p style="font-size:13px;color:var(--text-muted);font-weight:600;margin-bottom:14px">Search karo → product dekho → "+ Compare Me" dabao. Dono slots fill karo!</p>
-      <div class="compare-slots" id="compareSlots">
-        <div class="compare-slot" id="slot0">
-          <div class="compare-slot-empty-icon">🍽️</div>
-          <div class="compare-slot-empty-txt">Slot 1 Khali hai<br>Search karke add karo</div>
-        </div>
-        <div class="compare-slot" id="slot1">
-          <div class="compare-slot-empty-icon">🍽️</div>
-          <div class="compare-slot-empty-txt">Slot 2 Khali hai<br>Search karke add karo</div>
-        </div>
+      <div class="section-label">Side-by-Side ⚖️</div>
+      <p style="font-size:13px;color:var(--text-muted);font-weight:600;margin-bottom:14px;">Koi bhi product dekho → "+ Compare" dabao → dono slots bharo!</p>
+      <div class="compare-slots">
+        <div class="compare-slot" id="slot0"><div class="compare-slot-empty-icon">🍽️</div><div class="compare-slot-empty-txt">Slot 1 Khali</div></div>
+        <div class="compare-slot" id="slot1"><div class="compare-slot-empty-icon">🍽️</div><div class="compare-slot-empty-txt">Slot 2 Khali</div></div>
       </div>
       <div id="compareResult"></div>
-      <button class="btn-compare-reset" onclick="resetCompare()">🗑️ Reset Compare</button>
+      <button class="btn-compare-reset" onclick="resetCompare()">🗑️ Reset</button>
     </div>
   </div>
 </div>
 
-<!-- ZXing loaded async — scanner waits until ready -->
-<script>
-  /* ======= ZXing lazy load ======= */
-  let zxingReady = false;
-  const zxScript = document.createElement('script');
-  zxScript.src = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
-  zxScript.onload = () => { zxingReady = true; };
-  zxScript.onerror = () => { console.warn('ZXing CDN failed to load'); };
-  document.head.appendChild(zxScript);
-</script>
+<!-- Quagga2 — fast, lightweight barcode scanner -->
+<script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.4/dist/quagga.min.js"></script>
 
 <script>
-/* ============================================================
-   CONSTANTS & GLOBALS
-   ============================================================ */
-const noImgPlaceholder = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='%23FF3D68'><path d='M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z'/></svg>";
+/* ─── CONSTANTS ─── */
+const NOIMG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='%23FF3D68'><path d='M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z'/></svg>";
 
-const OFFFetch = {
-  byBarcode: id => `https://world.openfoodfacts.org/api/v2/product/${id}.json`,
-  byName: q => `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=6&fields=product_name,brands,nutriments,ingredients_text,image_front_url,quantity,_id`
+/* Open Food Facts — two endpoints, India server first then world */
+const API = {
+  barcode: id => `https://world.openfoodfacts.org/api/v2/product/${id}.json`,
+  search:  q  => `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=6&fields=product_name,brands,nutriments,ingredients_text,image_front_url,quantity,_id`
+};
+const TIMEOUT = 7000;
+
+const DB = {
+  "8901063019142": { product_name:"Lays Classic Salted", brands:"PepsiCo India", nutriments:{"energy-kcal_100g":541,sugars_100g:0.5,fat_100g:33,salt_100g:1.1}, ingredients_text:"Potato, Edible Vegetable Oil (Palmolein Oil), Salt.", _price:"₹20", _weight:"50g" },
+  "8901826100191": { product_name:"Maggi 2-Min Masala Noodles", brands:"Nestle India", nutriments:{"energy-kcal_100g":427,sugars_100g:2.2,fat_100g:15.7,salt_100g:3.2}, ingredients_text:"Wheat flour, Palm oil, Salt, Wheat gluten, Spices mix, Hydrolysed groundnut protein, MSG (E621), Acid regulator.", _price:"₹14", _weight:"70g" },
+  "7622210449283": { product_name:"Oreo Chocolate Biscuits", brands:"Mondelez International", nutriments:{"energy-kcal_100g":480,sugars_100g:38,fat_100g:20,salt_100g:0.9}, ingredients_text:"Wheat Flour, Sugar, Palmolein Oil, Cocoa Powder, Invert Sugar, Raising Agents, Salt, Emulsifier.", _price:"₹30", _weight:"120g" },
+  "8901063363313": { product_name:"Kurkure Masala Munch", brands:"PepsiCo India", nutriments:{"energy-kcal_100g":558,sugars_100g:0.2,fat_100g:34.5,salt_100g:1.7}, ingredients_text:"Rice Meal, Corn Meal, Gram Meal, Edible Vegetable Oil (Palmolein Oil), Seasoning (Spices, Condiments, Salt, Sugar, MSG E621).", _price:"₹10", _weight:"40g" },
+  "unclechips": { product_name:"Uncle Chips Spicy Treat", brands:"PepsiCo India", nutriments:{"energy-kcal_100g":546,sugars_100g:1.2,fat_100g:34.0,salt_100g:1.4}, ingredients_text:"Potato, Edible Vegetable Oil (Palmolein Oil), Spices & Condiments, Salt, Acidity Regulators.", _price:"₹20", _weight:"50g" },
+  "cocacola": { product_name:"Coca-Cola Original Taste", brands:"The Coca-Cola Company", nutriments:{"energy-kcal_100g":44,sugars_100g:10.9,fat_100g:0,salt_100g:0.02}, ingredients_text:"Carbonated Water, Sugar, Acidity Regulator (338) / Phosphoric Acid, Caffeine, Natural Colour (150d).", _price:"₹40", _weight:"250ml" },
+  "thumsup": { product_name:"Thums Up Charged", brands:"The Coca-Cola Company (India)", nutriments:{"energy-kcal_100g":40,sugars_100g:10.0,fat_100g:0,salt_100g:0.03}, ingredients_text:"Carbonated Water, Sugar, Acidity Regulator (338), Caffeine, Natural Colour (150d), Flavours.", _price:"₹40", _weight:"250ml" },
+  "sprite": { product_name:"Sprite Lemon-Lime", brands:"The Coca-Cola Company", nutriments:{"energy-kcal_100g":47,sugars_100g:11.8,fat_100g:0,salt_100g:0.01}, ingredients_text:"Carbonated Water, Sugar, Acidity Regulators (330, 331), Preservative (211), Flavours.", _price:"₹40", _weight:"250ml" },
+  "campa": { product_name:"Campa Cola", brands:"Reliance Consumer Products", nutriments:{"energy-kcal_100g":42,sugars_100g:10.5,fat_100g:0,salt_100g:0.02}, ingredients_text:"Carbonated Water, Sugar, Acidity Regulator (338), Caffeine, Colour (150d).", _price:"₹20", _weight:"200ml" },
+  "maggi": { product_name:"Maggi 2-Min Masala Noodles", brands:"Nestle India", nutriments:{"energy-kcal_100g":427,sugars_100g:2.2,fat_100g:15.7,salt_100g:3.2}, ingredients_text:"Wheat flour, Palm oil, Salt, Wheat gluten, Spices mix, Hydrolysed groundnut protein, MSG (E621), Acid regulator.", _price:"₹14", _weight:"70g" },
+  "oreo": { product_name:"Oreo Chocolate Biscuits", brands:"Mondelez International", nutriments:{"energy-kcal_100g":480,sugars_100g:38,fat_100g:20,salt_100g:0.9}, ingredients_text:"Wheat Flour, Sugar, Palmolein Oil, Cocoa Powder, Invert Sugar, Raising Agents, Salt, Emulsifier.", _price:"₹30", _weight:"120g" },
+  "kurkure": { product_name:"Kurkure Masala Munch", brands:"PepsiCo India", nutriments:{"energy-kcal_100g":558,sugars_100g:0.2,fat_100g:34.5,salt_100g:1.7}, ingredients_text:"Rice Meal, Corn Meal, Gram Meal, Edible Vegetable Oil (Palmolein Oil), Seasoning (Spices, Condiments, Salt, Sugar, MSG E621).", _price:"₹10", _weight:"40g" }
 };
 
-const FETCH_TIMEOUT = 8000; // 8 seconds
-
-const fallbackDatabase = {
-  "8901063019142": { product_name:"Lays Classic Salted", brands:"PepsiCo India", nutriments:{"energy-kcal_100g":541,sugars_100g:0.5,fat_100g:33,salt_100g:1.1}, ingredients_text:"Potato, Edible Vegetable Oil (Palmolein Oil), Salt.", image_front_url:"", _price:"₹20", _weight:"50g" },
-  "8901826100191": { product_name:"Maggi 2-Min Masala Noodles", brands:"Nestle India", nutriments:{"energy-kcal_100g":427,sugars_100g:2.2,fat_100g:15.7,salt_100g:3.2}, ingredients_text:"Wheat flour, Palm oil, Salt, Wheat gluten, Spices mix, Hydrolysed groundnut protein, MSG (E621), Acid regulator.", image_front_url:"", _price:"₹14", _weight:"70g" },
-  "7622210449283": { product_name:"Oreo Chocolate Biscuits", brands:"Mondelez International", nutriments:{"energy-kcal_100g":480,sugars_100g:38,fat_100g:20,salt_100g:0.9}, ingredients_text:"Wheat Flour, Sugar, Palmolein Oil, Cocoa Powder, Invert Sugar, Raising Agents, Salt, Emulsifier.", image_front_url:"", _price:"₹30", _weight:"120g" },
-  "8901063363313": { product_name:"Kurkure Masala Munch", brands:"PepsiCo India", nutriments:{"energy-kcal_100g":558,sugars_100g:0.2,fat_100g:34.5,salt_100g:1.7}, ingredients_text:"Rice Meal, Corn Meal, Gram Meal, Edible Vegetable Oil (Palmolein Oil), Seasoning (Spices, Condiments, Salt, Sugar, MSG E621).", image_front_url:"", _price:"₹10", _weight:"40g" },
-  "unclechips": { product_name:"Uncle Chips Spicy Treat", brands:"PepsiCo India", nutriments:{"energy-kcal_100g":546,sugars_100g:1.2,fat_100g:34.0,salt_100g:1.4}, ingredients_text:"Potato, Edible Vegetable Oil (Palmolein Oil), Spices & Condiments, Salt, Acidity Regulators.", image_front_url:"", _price:"₹20", _weight:"50g" },
-  "cocacola": { product_name:"Coca-Cola Original Taste", brands:"The Coca-Cola Company", nutriments:{"energy-kcal_100g":44,sugars_100g:10.9,fat_100g:0,salt_100g:0.02}, ingredients_text:"Carbonated Water, Sugar, Acidity Regulator (338) / Phosphoric Acid, Caffeine, Natural Colour (150d).", image_front_url:"", _price:"₹40", _weight:"250ml" },
-  "thumsup": { product_name:"Thums Up Charged", brands:"The Coca-Cola Company (India)", nutriments:{"energy-kcal_100g":40,sugars_100g:10.0,fat_100g:0,salt_100g:0.03}, ingredients_text:"Carbonated Water, Sugar, Acidity Regulator (338), Caffeine, Natural Colour (150d), Flavours.", image_front_url:"", _price:"₹40", _weight:"250ml" },
-  "sprite": { product_name:"Sprite Lemon-Lime Clear", brands:"The Coca-Cola Company", nutriments:{"energy-kcal_100g":47,sugars_100g:11.8,fat_100g:0,salt_100g:0.01}, ingredients_text:"Carbonated Water, Sugar, Acidity Regulators (330, 331), Preservative (211), Flavours.", image_front_url:"", _price:"₹40", _weight:"250ml" },
-  "campa": { product_name:"Campa Cola", brands:"Reliance Consumer Products", nutriments:{"energy-kcal_100g":42,sugars_100g:10.5,fat_100g:0,salt_100g:0.02}, ingredients_text:"Carbonated Water, Sugar, Acidity Regulator (338), Caffeine, Colour (150d).", image_front_url:"", _price:"₹20", _weight:"200ml" },
-  "maggi": { product_name:"Maggi 2-Min Masala Noodles", brands:"Nestle India", nutriments:{"energy-kcal_100g":427,sugars_100g:2.2,fat_100g:15.7,salt_100g:3.2}, ingredients_text:"Wheat flour, Palm oil, Salt, Wheat gluten, Spices mix, Hydrolysed groundnut protein, MSG (E621), Acid regulator.", image_front_url:"", _price:"₹14", _weight:"70g" },
-  "oreo": { product_name:"Oreo Chocolate Biscuits", brands:"Mondelez International", nutriments:{"energy-kcal_100g":480,sugars_100g:38,fat_100g:20,salt_100g:0.9}, ingredients_text:"Wheat Flour, Sugar, Palmolein Oil, Cocoa Powder, Invert Sugar, Raising Agents, Salt, Emulsifier.", image_front_url:"", _price:"₹30", _weight:"120g" },
-  "kurkure": { product_name:"Kurkure Masala Munch", brands:"PepsiCo India", nutriments:{"energy-kcal_100g":558,sugars_100g:0.2,fat_100g:34.5,salt_100g:1.7}, ingredients_text:"Rice Meal, Corn Meal, Gram Meal, Edible Vegetable Oil (Palmolein Oil), Seasoning (Spices, Condiments, Salt, Sugar, MSG E621).", image_front_url:"", _price:"₹10", _weight:"40g" }
-};
-
-const harmfulDictionary = [
-  { keywords:[/palm oil/i,/palmolein/i], name:"Refined Palmolein Additives 🛢️", risk:"Highly structured lipid density. Promotes vascular blockage traits." },
-  { keywords:[/msg/i,/monosodium/i,/glutamate/i,/e621/i,/E621/], name:"Neuro-Taste Multiplier MSG (E621) 🧠", risk:"Forces artificial flavor overconsumption habits." },
-  { keywords:[/hydrogenated/i,/trans fat/i], name:"Mutated Trans Lipids ❌", risk:"Causes acute arterial strain indexes." },
-  { keywords:[/high fructose/i,/invert sugar/i,/maltodextrin/i], name:"High-GI Glycemic Agents ⚠️", risk:"Forces rapid insulin surges, compromising metabolic balance." },
-  { keywords:[/phosphoric acid/i,/\(338\)/,/ins 338/i], name:"Phosphoric Acid (INS 338) 🧪", risk:"Can decay tooth enamel and drain bone calcium density." },
-  { keywords:[/caffeine/i], name:"Added Caffeine Stimulant ⚡", risk:"Can produce mild sleep disturbances if over-ingested." },
-  { keywords:[/sodium benzoate/i,/\(211\)/i,/e211/i], name:"Sodium Benzoate (E211) ☢️", risk:"May form benzene when combined with Vitamin C." }
+const HAZARDS = [
+  { rx:[/palm oil/i,/palmolein/i], name:"Refined Palmolein 🛢️", risk:"High lipid density — promotes vascular stress." },
+  { rx:[/msg/i,/monosodium glutamate/i,/e621/i], name:"MSG (E621) 🧠", risk:"Artificial flavour amplifier — drives overconsumption." },
+  { rx:[/hydrogenated/i,/trans fat/i], name:"Trans Lipids ❌", risk:"Acute arterial strain — WHO recommends zero intake." },
+  { rx:[/high fructose/i,/invert sugar/i,/maltodextrin/i], name:"High-GI Glycemic Agents ⚠️", risk:"Rapid insulin spike — metabolic imbalance." },
+  { rx:[/phosphoric acid/i,/\(338\)/,/ins 338/i], name:"Phosphoric Acid (338) 🧪", risk:"Erodes tooth enamel, reduces bone calcium." },
+  { rx:[/caffeine/i], name:"Added Caffeine ⚡", risk:"Can disrupt sleep if consumed in excess." },
+  { rx:[/sodium benzoate/i,/\(211\)/i,/e211/i], name:"Sodium Benzoate (E211) ☢️", risk:"Forms benzene with Vitamin C — carcinogenic potential." }
 ];
 
-const nutriDescs = { A:'Excellent Quality!', B:'Good Quality', C:'Okay Occasionally', D:'Poor Quality', E:'Avoid This One!' };
+const GRADE_LABELS = { A:'Excellent!', B:'Good', C:'Okay', D:'Poor', E:'Avoid!' };
 
-let codeReader = null;
-let scanActive = false;
+/* ─── STATE ─── */
 let currentProduct = null;
-let compareSlots = [null, null];
-let historyList = [];
-let fetchAbortController = null;
+let compareSlots   = [null, null];
+let history        = [];
+let scanning       = false;
+let lastBarcode    = null; /* debounce same barcode */
+let abortCtrl      = null;
+let toastTimer     = null;
 
-try { historyList = JSON.parse(localStorage.getItem('bitelook_history')) || []; } catch(e) { historyList = []; }
+try { history = JSON.parse(localStorage.getItem('bl_history')) || []; } catch(e) {}
+window.addEventListener('DOMContentLoaded', renderHistory);
 
-window.addEventListener('DOMContentLoaded', () => { renderHistory(); });
-
-/* ============================================================
-   MODE ROUTING
-   ============================================================ */
+/* ─── MODE ─── */
 function setMode(m) {
   document.getElementById('searchMode').classList.toggle('hidden', m !== 'search');
   document.getElementById('compareMode').classList.toggle('hidden', m !== 'compare');
@@ -454,526 +422,417 @@ function setMode(m) {
   if (m === 'compare') renderCompare();
 }
 
-/* ============================================================
-   CAMERA — FIXED: proper init/cleanup, error states, status
-   ============================================================ */
-async function startCamera() {
+/* ══════════════════════════════════════════════════════════
+   SCANNER — Quagga2 (fast, lightweight)
+   ══════════════════════════════════════════════════════════ */
+function startCamera() {
   const btn = document.getElementById('cameraBtn');
-  const permMsg = document.getElementById('camPermMsg');
-  permMsg.style.display = 'none';
+  const errEl = document.getElementById('camErr');
+  errEl.style.display = 'none';
 
-  if (!zxingReady || typeof ZXing === 'undefined') {
-    showToast('Scanner library load ho raha hai, thoda wait karo...', true);
-    // Retry after 2s
-    btn.disabled = true;
-    setTimeout(() => {
-      btn.disabled = false;
-      if (zxingReady) startCamera();
-    }, 2000);
-    return;
+  if (typeof Quagga === 'undefined') {
+    toast('Scanner load nahi hua, page refresh karo.', true); return;
   }
-
-  // Check camera API support
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    showToast('Is browser mein camera support nahi hai.', true);
-    return;
+  if (!navigator.mediaDevices?.getUserMedia) {
+    toast('Camera support nahi is browser mein.', true); return;
   }
 
   btn.disabled = true;
-  btn.innerText = '⏳ Camera khul raha hai...';
+  btn.textContent = '⏳ Camera on ho raha hai...';
 
-  try {
-    // Pre-check permission explicitly
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-    stream.getTracks().forEach(t => t.stop()); // Release, ZXing will reopen
+  Quagga.init({
+    inputStream: {
+      type: 'LiveStream',
+      target: document.getElementById('video'),
+      constraints: {
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        facingMode: 'environment'  /* back camera */
+      }
+    },
+    locator: { patchSize: 'medium', halfSample: true },
+    numOfWorkers: 1,
+    frequency: 10,   /* decode attempts per second — balanced */
+    decoder: {
+      /* Only common barcode formats — faster detection */
+      readers: ['ean_reader', 'ean_8_reader', 'upc_reader', 'upc_e_reader', 'code_128_reader']
+    },
+    locate: true
+  }, err => {
+    if (err) {
+      btn.disabled = false;
+      btn.textContent = 'LAUNCH SCANNER 🚀';
+      const msg = err.name === 'NotAllowedError' ? 'Camera permission deny hua. Browser settings mein allow karo.'
+                : err.name === 'NotFoundError'   ? 'Koi camera nahi mila.'
+                : err.name === 'NotReadableError' ? 'Camera kisi aur app ne pakad rakha hai.'
+                : 'Camera error: ' + (err.message || err.name);
+      errEl.textContent = '📵 ' + msg;
+      errEl.style.display = 'block';
+      return;
+    }
 
-    // UI update
-    document.getElementById('placeholder').classList.add('hidden');
+    Quagga.start();
+    scanning = true;
+    lastBarcode = null;
+
+    /* Show scanner UI */
+    document.getElementById('scannerIdle').style.display = 'none';
     document.getElementById('video').style.display = 'block';
-    document.getElementById('scanOverlay').style.display = 'flex';
-    document.getElementById('scanStatusBar').style.display = 'block';
+    document.getElementById('scanOverlay').style.display = 'block';
+    document.getElementById('scanPill').style.display = 'block';
     document.getElementById('cameraBtn').classList.add('hidden');
     document.getElementById('stopBtn').classList.remove('hidden');
     btn.disabled = false;
+    btn.textContent = 'LAUNCH SCANNER 🚀';
+  });
 
-    scanActive = true;
-    codeReader = new ZXing.BrowserMultiFormatReader();
+  /* ── Quagga detected callback ── */
+  Quagga.onDetected(data => {
+    if (!scanning) return;
+    const code = data?.codeResult?.code;
+    if (!code || code === lastBarcode) return; /* ignore repeats */
 
-    // Use native API instead of ZXing.BrowserCodeReader.listVideoInputDevices (not in 0.21.3)
-    let deviceId = null;
-    try {
-      const allDevices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = allDevices.filter(d => d.kind === 'videoinput');
-      if (videoDevices.length > 0) {
-        const back = videoDevices.find(d => /back|rear|environment/i.test(d.label));
-        deviceId = back ? back.deviceId : videoDevices[videoDevices.length - 1].deviceId;
-      }
-    } catch(e) { deviceId = null; } // null = ZXing picks default
+    const confidence = data.codeResult.decodedCodes
+      .filter(c => c.error !== undefined)
+      .reduce((acc, c) => acc + (1 - c.error), 0) /
+      (data.codeResult.decodedCodes.filter(c => c.error !== undefined).length || 1);
 
-    await codeReader.decodeFromVideoDevice(deviceId, 'video', (result, err) => {
-      if (!scanActive) return;
-      if (result) {
-        navigator.vibrate && navigator.vibrate([100, 50, 100]);
-        showToast('✅ Barcode mila: ' + result.getText());
-        stopCamera();
-        fetchFoodMetadata(result.getText());
-      }
-      // Suppress NotFoundException spam — it fires every frame when no barcode
-    });
+    if (confidence < 0.65) return; /* low confidence — skip */
 
-  } catch (err) {
-    btn.disabled = false;
-    btn.innerText = 'LAUNCH SCANNER 🚀';
+    lastBarcode = code;
+    navigator.vibrate?.([80, 40, 80]);
+
+    /* Flash effect */
+    const flash = document.getElementById('scanFlash');
+    flash.classList.add('pop');
+    setTimeout(() => flash.classList.remove('pop'), 150);
+
     stopCamera();
-
-    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-      permMsg.style.display = 'block';
-      showToast('Camera permission deny hua.', true);
-    } else if (err.name === 'NotFoundError') {
-      showToast('Koi camera nahi mila device mein.', true);
-    } else if (err.name === 'NotReadableError') {
-      showToast('Camera kisi aur app ne use kar rakha hai.', true);
-    } else {
-      showToast('Camera error: ' + (err.message || err.name), true);
-    }
-  }
+    toast('✅ Barcode: ' + code);
+    fetchProduct(code);
+  });
 }
 
 function stopCamera() {
-  scanActive = false;
+  if (!scanning && typeof Quagga === 'undefined') return;
+  scanning = false;
+  try { Quagga.stop(); } catch(e) {}
 
-  if (codeReader) {
-    try { codeReader.reset(); } catch(e) {}
-    codeReader = null;
-  }
-
-  // Also force-stop any lingering video tracks
-  const vid = document.getElementById('video');
-  if (vid && vid.srcObject) {
-    try { vid.srcObject.getTracks().forEach(t => t.stop()); } catch(e) {}
-    vid.srcObject = null;
-  }
-  vid.style.display = 'none';
-
-  document.getElementById('placeholder').classList.remove('hidden');
+  document.getElementById('scannerIdle').style.display = '';
+  document.getElementById('video').style.display = 'none';
   document.getElementById('scanOverlay').style.display = 'none';
-  document.getElementById('scanStatusBar').style.display = 'none';
+  document.getElementById('scanPill').style.display = 'none';
   document.getElementById('cameraBtn').classList.remove('hidden');
-  document.getElementById('cameraBtn').disabled = false;
-  document.getElementById('cameraBtn').innerText = 'LAUNCH SCANNER 🚀';
   document.getElementById('stopBtn').classList.add('hidden');
 }
 
-/* ============================================================
-   SEARCH INPUT
-   ============================================================ */
-function quickSelect(key) {
+/* ─── SEARCH ─── */
+function quickSearch(key) {
   document.getElementById('searchInput').value = key;
-  handleSearchInput();
+  doSearch();
+}
+function doSearch() {
+  const q = document.getElementById('searchInput').value.trim();
+  if (q) fetchProduct(q);
 }
 
-function handleSearchInput() {
-  const query = document.getElementById('searchInput').value.trim();
-  if (!query) return;
-  fetchFoodMetadata(query);
-}
+/* ══════════════════════════════════════════════════════════
+   FETCH PIPELINE
+   Priority: 1) Offline DB (instant) → 2) Live API
+   For barcode: DB first, API parallel if not found
+   For name: DB first, API if no match
+   ══════════════════════════════════════════════════════════ */
+async function fetchProduct(query) {
+  hideLayouts();
+  setBusy(true);
 
-/* ============================================================
-   FETCH HELPER — timeout + abort
-   ============================================================ */
-async function fetchWithTimeout(url, timeoutMs = FETCH_TIMEOUT) {
-  if (fetchAbortController) {
-    try { fetchAbortController.abort(); } catch(e) {}
+  const q = query.trim();
+  const isBarcode = /^\d{6,14}$/.test(q);
+  const dbKey = Object.keys(DB).find(k => k.toLowerCase() === q.toLowerCase());
+
+  /* ── 1. Instant offline hit ── */
+  if (dbKey) {
+    showProduct({ ...DB[dbKey], _id: dbKey, _source: 'offline', image_front_url: '' });
+    return;
   }
-  fetchAbortController = new AbortController();
-  const timeoutId = setTimeout(() => fetchAbortController.abort(), timeoutMs);
-  try {
-    const res = await fetch(url, { signal: fetchAbortController.signal });
-    clearTimeout(timeoutId);
-    return res;
-  } catch (e) {
-    clearTimeout(timeoutId);
-    throw e;
-  }
-}
 
-/* ============================================================
-   DATA PIPELINE — barcode → API → name search → fallback
-   ============================================================ */
-async function fetchFoodMetadata(targetString) {
-  hideAllLayouts();
-  setSearchUIBusy(true);
-  showLoader(true, 'Data fetch ho raha hai...', 'Open Food Facts API check kar raha hoon');
-
-  const isBarcode = /^\d{6,14}$/.test(targetString.trim());
-  const matchKey = Object.keys(fallbackDatabase).find(k => k.toLowerCase() === targetString.toLowerCase());
-
-  // 1. Barcode — try live API first
+  /* ── 2. Barcode not in local DB → try API ── */
   if (isBarcode) {
-    try {
-      setLoaderText('Barcode scan kar raha hoon...', `${targetString} → API`);
-      const res = await fetchWithTimeout(OFFFetch.byBarcode(targetString));
-      if (res.ok) {
-        const data = await res.json();
-        if (data.status === 1 && data.product) {
-          const prod = mapExternalModel(data.product, true);
-          finishWithProduct(prod);
-          return;
-        }
-      }
-    } catch (err) {
-      console.warn('Barcode API failed:', err.name);
+    setLoader(true, 'Barcode check ho raha hai...', API.barcode(q));
+    const prod = await apiFetch(API.barcode(q));
+    if (prod && prod.status === 1 && prod.product?.product_name) {
+      showProduct(mapAPI(prod.product));
+    } else {
+      setLoader(false);
+      setBusy(false);
+      toast('Barcode database mein nahi mila. Naam se search karo!', true);
     }
-    // Fallback to local barcode DB
-    if (fallbackDatabase[targetString]) {
-      setTimeout(() => finishWithProduct({ ...fallbackDatabase[targetString], _source: 'offline' }), 300);
-      return;
-    }
-    showLoader(false);
-    setSearchUIBusy(false);
-    showToast('Barcode nahi mila kisi bhi database mein. Try karo manually.', true);
     return;
   }
 
-  // 2. Name keyword — check local first (instant)
-  if (matchKey) {
-    setTimeout(() => finishWithProduct({ ...fallbackDatabase[matchKey], _source: 'offline' }), 600);
-    return;
-  }
+  /* ── 3. Name search → API ── */
+  setLoader(true, `"${q}" dhoondh raha hoon...`, 'Open Food Facts search');
+  const res = await apiFetch(API.search(q));
+  setLoader(false);
 
-  // 3. Name keyword — try live API search
+  if (res?.products?.length) {
+    const valid = res.products.filter(p => p.product_name).slice(0, 6);
+    if (valid.length === 1) {
+      showProduct(mapAPI(valid[0]));
+    } else if (valid.length > 1) {
+      showResults(valid);
+      setBusy(false);
+    } else {
+      setBusy(false);
+      toast(`"${q}" nahi mila. Barcode scan karo ya spelling check karo.`, true);
+    }
+  } else {
+    setBusy(false);
+    toast(`"${q}" nahi mila. Barcode scan karo ya spelling check karo.`, true);
+  }
+}
+
+/* Fetch with timeout + abort */
+async function apiFetch(url) {
+  if (abortCtrl) { try { abortCtrl.abort(); } catch(e) {} }
+  abortCtrl = new AbortController();
+  const tid = setTimeout(() => abortCtrl.abort(), TIMEOUT);
   try {
-    setLoaderText('API se dhoondh raha hoon...', `"${targetString}" search`);
-    const res = await fetchWithTimeout(OFFFetch.byName(targetString));
-    if (res.ok) {
-      const data = await res.json();
-      if (data.products && data.products.length > 0) {
-        // Multiple results — show list
-        const products = data.products.filter(p => p.product_name).slice(0, 6);
-        if (products.length === 1) {
-          finishWithProduct(mapExternalModel(products[0], true));
-        } else if (products.length > 1) {
-          showSearchResults(products);
-          showLoader(false);
-          setSearchUIBusy(false);
-        } else {
-          throw new Error('no results');
-        }
-        return;
-      }
-    }
-  } catch (err) {
-    console.warn('Name search API failed:', err.name);
+    const r = await fetch(url, { signal: abortCtrl.signal });
+    clearTimeout(tid);
+    if (!r.ok) return null;
+    return await r.json();
+  } catch(e) {
+    clearTimeout(tid);
+    return null;
   }
-
-  showLoader(false);
-  setSearchUIBusy(false);
-  showToast(`"${targetString}" nahi mila. Spelling check karo ya barcode try karo.`, true);
 }
 
-function finishWithProduct(prod) {
-  currentProduct = prod;
-  if (!currentProduct.id) currentProduct.id = Date.now().toString();
-  showLoader(false);
-  setSearchUIBusy(false);
-  hideAllLayouts();
-  buildProductUI();
-  pushHistory(currentProduct);
-}
-
-function mapExternalModel(p, fromAPI = false) {
+function mapAPI(p) {
   return {
-    id: p._id || Date.now().toString(),
-    product_name: p.product_name || "Unknown Snack",
-    brands: p.brands || "Unknown Brand",
+    _id: p._id || String(Date.now()),
+    product_name: p.product_name || 'Unknown Snack',
+    brands: p.brands || 'Unknown Brand',
     nutriments: {
-      "energy-kcal_100g": parseFloat(p.nutriments?.['energy-kcal_100g'] || p.nutriments?.['energy-kcal'] || 0),
-      sugars_100g: parseFloat(p.nutriments?.sugars_100g || p.nutriments?.sugars || 0),
-      fat_100g: parseFloat(p.nutriments?.fat_100g || p.nutriments?.fat || 0),
-      salt_100g: parseFloat(p.nutriments?.salt_100g || p.nutriments?.salt || 0)
+      'energy-kcal_100g': parseFloat(p.nutriments?.['energy-kcal_100g'] || p.nutriments?.['energy-kcal'] || 0),
+      sugars_100g: parseFloat(p.nutriments?.sugars_100g || 0),
+      fat_100g:    parseFloat(p.nutriments?.fat_100g    || 0),
+      salt_100g:   parseFloat(p.nutriments?.salt_100g   || 0)
     },
-    ingredients_text: p.ingredients_text || "Ingredients data available nahi hai.",
-    image_front_url: p.image_front_url || p.image_url || "",
-    _price: "₹" + (Math.floor(Math.random() * 40) + 10),
-    _weight: p.quantity || "100g",
-    _source: fromAPI ? 'api' : 'offline'
+    ingredients_text: p.ingredients_text || 'Data available nahi.',
+    image_front_url:  p.image_front_url  || '',
+    _price:   '₹' + (Math.floor(Math.random() * 40) + 10),
+    _weight:  p.quantity || '100g',
+    _source: 'api'
   };
 }
 
-/* ============================================================
-   SEARCH RESULTS LIST
-   ============================================================ */
-function showSearchResults(products) {
+/* ─── SHOW RESULTS LIST ─── */
+function showResults(products) {
   const grid = document.getElementById('resultsGrid');
   const list = document.getElementById('searchList');
   list.innerHTML = '';
-
   products.forEach(p => {
-    const mapped = mapExternalModel(p, true);
-    const score = calculateLookGrade(mapped.nutriments);
-    const item = document.createElement('div');
-    item.className = 'search-item';
-    item.innerHTML = `
-      <img src="${mapped.image_front_url || noImgPlaceholder}" onerror="this.src=noImgPlaceholder" alt="">
+    const m = mapAPI(p);
+    const g = grade(m.nutriments);
+    const el = document.createElement('div');
+    el.className = 'search-item';
+    el.innerHTML = `
+      <img src="${m.image_front_url||NOIMG}" onerror="this.src=NOIMG" alt="">
       <div class="search-item-info">
-        <div class="search-item-name">${mapped.product_name}</div>
-        <div class="search-item-brand">${mapped.brands}</div>
+        <div class="search-item-name">${m.product_name}</div>
+        <div class="search-item-brand">${m.brands}</div>
       </div>
-      <span class="search-item-grade" style="background:${score.color}">Grade ${score.grade}</span>
-    `;
-    item.onclick = () => {
-      grid.style.display = 'none';
-      finishWithProduct(mapped);
-    };
-    list.appendChild(item);
+      <span class="search-item-grade" style="background:${g.color}">Grade ${g.g}</span>`;
+    el.onclick = () => { grid.style.display = 'none'; showProduct(m); };
+    list.appendChild(el);
   });
-
   grid.style.display = 'flex';
 }
 
-/* ============================================================
-   SCORING ENGINE
-   ============================================================ */
-function calculateLookGrade(m) {
-  const kcal = m["energy-kcal_100g"] || 0;
-  const sugar = m.sugars_100g || 0;
-  const fat = m.fat_100g || 0;
-  const salt = m.salt_100g || 0;
-  const deficit = (kcal * 0.05) + (sugar * 3.5) + (fat * 1.5) + (salt * 8.0);
-  if (deficit < 25)  return { grade:'A', percent:95, label:nutriDescs.A, color:'#00D26A' };
-  if (deficit < 60)  return { grade:'B', percent:75, label:nutriDescs.B, color:'#86E3CE' };
-  if (deficit < 110) return { grade:'C', percent:55, label:nutriDescs.C, color:'#FFB300' };
-  if (deficit < 190) return { grade:'D', percent:35, label:nutriDescs.D, color:'#FF7844' };
-  return { grade:'E', percent:12, label:nutriDescs.E, color:'#FF1E56' };
-}
+/* ─── PRODUCT DISPLAY ─── */
+function showProduct(p) {
+  currentProduct = p;
+  setBusy(false);
+  setLoader(false);
+  hideLayouts();
 
-/* ============================================================
-   PRODUCT UI BUILDER
-   ============================================================ */
-function buildProductUI() {
-  if (!currentProduct) return;
-  document.getElementById('productImg').src = currentProduct.image_front_url || noImgPlaceholder;
-  document.getElementById('productName').innerText = currentProduct.product_name;
-  document.getElementById('productBrand').innerText = currentProduct.brands || "Unknown Brand";
-  document.getElementById('productPrice').innerText = currentProduct._price || "₹?";
-  document.getElementById('productWeight').innerText = currentProduct._weight || "?g";
+  document.getElementById('productImg').src = p.image_front_url || NOIMG;
+  document.getElementById('productName').textContent = p.product_name;
+  document.getElementById('productBrand').textContent = p.brands || '---';
+  document.getElementById('productPrice').textContent = p._price || '₹?';
+  document.getElementById('productWeight').textContent = p._weight || '?';
+  document.getElementById('srcBadge').innerHTML = p._source === 'api'
+    ? '<span class="api-badge">🌐 Live</span>'
+    : '<span class="offline-badge">📦 Offline</span>';
 
-  const srcBadge = document.getElementById('dataSourceBadge');
-  if (currentProduct._source === 'api') {
-    srcBadge.innerHTML = '<span class="api-badge">🌐 Live API</span>';
-  } else {
-    srcBadge.innerHTML = '<span class="offline-badge">📦 Offline DB</span>';
-  }
+  document.getElementById('ingredientsText').textContent = p.ingredients_text || '---';
+
+  /* Hazards */
+  const ing = p.ingredients_text || '';
+  const wl  = document.getElementById('warningList');
+  wl.innerHTML = '';
+  let hasHazard = false;
+  HAZARDS.forEach(h => {
+    if (h.rx.some(rx => rx.test(ing))) {
+      hasHazard = true;
+      const c = document.createElement('div');
+      c.className = 'hazard-card';
+      c.innerHTML = `<strong>${h.name}</strong><br>${h.risk}`;
+      wl.appendChild(c);
+    }
+  });
+  document.getElementById('harmfulContainer').classList.toggle('hidden', !hasHazard);
 
   document.getElementById('servingSize').value = 100;
   updateMacros();
-
-  const ingText = currentProduct.ingredients_text || "";
-  document.getElementById('ingredientsText').innerText = ingText;
-
-  const warningList = document.getElementById('warningList');
-  warningList.innerHTML = '';
-  let threatFlag = false;
-  harmfulDictionary.forEach(node => {
-    if (node.keywords.some(rx => rx.test(ingText))) {
-      threatFlag = true;
-      const card = document.createElement('div');
-      card.className = 'hazard-card';
-      card.innerHTML = `<strong>${node.name}</strong><br>${node.risk}`;
-      warningList.appendChild(card);
-    }
-  });
-  document.getElementById('harmfulContainer').style.display = threatFlag ? 'block' : 'none';
   document.getElementById('productCard').style.display = 'flex';
+
+  pushHistory(p);
 }
 
 function updateMacros() {
   if (!currentProduct) return;
-  let sz = parseFloat(document.getElementById('servingSize').value);
-  if (isNaN(sz) || sz <= 0) sz = 100;
-  const mult = sz / 100;
-  const n = currentProduct.nutriments;
+  let sz = parseFloat(document.getElementById('servingSize').value) || 100;
+  const m  = sz / 100;
+  const n  = currentProduct.nutriments;
+  const kc = (n['energy-kcal_100g'] * m).toFixed(0);
+  const su = (n.sugars_100g * m).toFixed(1);
+  const fa = (n.fat_100g * m).toFixed(1);
+  const sa = (n.salt_100g * m).toFixed(2);
 
-  const kcal = (n["energy-kcal_100g"] * mult).toFixed(0);
-  const sugar = (n.sugars_100g * mult).toFixed(1);
-  const fat = (n.fat_100g * mult).toFixed(1);
-  const salt = (n.salt_100g * mult).toFixed(2);
+  document.getElementById('mKcal').textContent  = kc + ' kcal';
+  document.getElementById('mSugar').textContent = su + 'g';
+  document.getElementById('mFat').textContent   = fa + 'g';
+  document.getElementById('mSalt').textContent  = sa + 'g';
 
-  document.getElementById('calories').innerText = kcal + ' kcal';
-  document.getElementById('sugar').innerText = sugar + 'g';
-  document.getElementById('fat').innerText = fat + 'g';
-  document.getElementById('salt').innerText = salt + 'g';
+  document.getElementById('bKcal').style.width  = Math.min(kc/600*100,100)+'%';
+  document.getElementById('bSugar').style.width = Math.min(su/30*100,100)+'%';
+  document.getElementById('bFat').style.width   = Math.min(fa/25*100,100)+'%';
+  document.getElementById('bSalt').style.width  = Math.min(sa/2*100,100)+'%';
 
-  document.getElementById('barKcal').style.width = Math.min((kcal / 600) * 100, 100) + '%';
-  document.getElementById('barSugar').style.width = Math.min((sugar / 30) * 100, 100) + '%';
-  document.getElementById('barFat').style.width = Math.min((fat / 25) * 100, 100) + '%';
-  document.getElementById('barSalt').style.width = Math.min((salt / 2) * 100, 100) + '%';
-
-  const score = calculateLookGrade(n);
+  const g = grade(n);
   document.querySelectorAll('.ng').forEach(el => el.classList.remove('active'));
-  const gradeNode = document.getElementById('ng-' + score.grade);
-  if (gradeNode) gradeNode.classList.add('active');
-  document.getElementById('nutriLabel').innerText = score.label;
+  document.getElementById('ng-'+g.g)?.classList.add('active');
+  document.getElementById('nutriLabel').textContent = g.label;
 
-  const fill = document.getElementById('meterFill');
-  fill.style.width = score.percent + '%';
-  fill.style.backgroundColor = score.color;
+  const f = document.getElementById('meterFill');
+  f.style.width = g.pct + '%';
+  f.style.backgroundColor = g.color;
+  const b = document.getElementById('healthBadge');
+  b.textContent = `GRADE ${g.g} // ${g.pct}% HEALTH`;
+  b.style.backgroundColor = g.color;
+}
+function setServing(v) { document.getElementById('servingSize').value = v; updateMacros(); }
 
-  const badge = document.getElementById('healthBadge');
-  badge.innerText = `GRADE ${score.grade} // ${score.percent}% HEALTH INDEX`;
-  badge.style.backgroundColor = score.color;
+/* ─── GRADE ─── */
+function grade(n) {
+  const d = (n['energy-kcal_100g']||0)*0.05 + (n.sugars_100g||0)*3.5 + (n.fat_100g||0)*1.5 + (n.salt_100g||0)*8;
+  if (d < 25)  return { g:'A', pct:95, label:GRADE_LABELS.A, color:'#00D26A' };
+  if (d < 60)  return { g:'B', pct:75, label:GRADE_LABELS.B, color:'#86E3CE' };
+  if (d < 110) return { g:'C', pct:55, label:GRADE_LABELS.C, color:'#FFB300' };
+  if (d < 190) return { g:'D', pct:35, label:GRADE_LABELS.D, color:'#FF7844' };
+  return { g:'E', pct:12, label:GRADE_LABELS.E, color:'#FF1E56' };
 }
 
-function setServing(val) {
-  document.getElementById('servingSize').value = val;
-  updateMacros();
-}
-
-/* ============================================================
-   COMPARE ENGINE
-   ============================================================ */
+/* ─── COMPARE ─── */
 function addToCompare() {
   if (!currentProduct) return;
-  if (compareSlots[0] && compareSlots[0].product_name === currentProduct.product_name) {
-    showToast('Yeh product Slot 1 mein already hai!', true); return;
-  }
-  if (compareSlots[1] && compareSlots[1].product_name === currentProduct.product_name) {
-    showToast('Yeh product Slot 2 mein already hai!', true); return;
-  }
-  if (!compareSlots[0]) {
-    compareSlots[0] = currentProduct;
-    showToast('✅ Slot 1 mein add hua!');
-  } else if (!compareSlots[1]) {
-    compareSlots[1] = currentProduct;
-    showToast('✅ Slot 2 mein add hua!');
-  } else {
-    compareSlots[0] = compareSlots[1];
-    compareSlots[1] = currentProduct;
-    showToast('🔄 Slot cycle hua! Slot 2 update!');
-  }
+  const name = currentProduct.product_name;
+  if (compareSlots[0]?.product_name === name) { toast('Slot 1 mein already hai!', true); return; }
+  if (compareSlots[1]?.product_name === name) { toast('Slot 2 mein already hai!', true); return; }
+  if (!compareSlots[0])      { compareSlots[0] = currentProduct; toast('✅ Slot 1 add!'); }
+  else if (!compareSlots[1]) { compareSlots[1] = currentProduct; toast('✅ Slot 2 add!'); }
+  else { compareSlots[0] = compareSlots[1]; compareSlots[1] = currentProduct; toast('🔄 Slot 2 updated!'); }
 }
 
 function renderCompare() {
   for (let i = 0; i < 2; i++) {
-    const slotEl = document.getElementById('slot' + i);
-    const data = compareSlots[i];
-    if (!data) {
-      slotEl.className = 'compare-slot';
-      slotEl.innerHTML = `<div class="compare-slot-empty-icon">🍽️</div><div class="compare-slot-empty-txt">Slot ${i+1} Khali hai<br>Search karke add karo</div>`;
+    const el = document.getElementById('slot' + i);
+    const d  = compareSlots[i];
+    if (!d) {
+      el.className = 'compare-slot';
+      el.innerHTML = `<div class="compare-slot-empty-icon">🍽️</div><div class="compare-slot-empty-txt">Slot ${i+1} Khali</div>`;
     } else {
-      slotEl.className = 'compare-slot filled';
-      const n = data.nutriments;
-      slotEl.innerHTML = `
-        <div class="compare-prod-name">${data.product_name}</div>
-        <div class="compare-metric"><span class="c-lbl">Kcal:</span><span>${n["energy-kcal_100g"]||0}</span></div>
-        <div class="compare-metric"><span class="c-lbl">Sugar:</span><span>${n.sugars_100g||0}g</span></div>
-        <div class="compare-metric"><span class="c-lbl">Fat:</span><span>${n.fat_100g||0}g</span></div>
-        <div class="compare-metric"><span class="c-lbl">Salt:</span><span>${n.salt_100g||0}g</span></div>
-        <div class="compare-remove" onclick="removeSlot(${i},event)">❌ Clear Slot</div>
-      `;
+      el.className = 'compare-slot filled';
+      const n = d.nutriments;
+      el.innerHTML = `
+        <div class="compare-prod-name">${d.product_name}</div>
+        <div class="compare-metric"><span class="c-lbl">Kcal</span><span>${n['energy-kcal_100g']||0}</span></div>
+        <div class="compare-metric"><span class="c-lbl">Sugar</span><span>${n.sugars_100g||0}g</span></div>
+        <div class="compare-metric"><span class="c-lbl">Fat</span><span>${n.fat_100g||0}g</span></div>
+        <div class="compare-metric"><span class="c-lbl">Salt</span><span>${n.salt_100g||0}g</span></div>
+        <div class="compare-remove" onclick="removeSlot(${i},event)">❌ Remove</div>`;
     }
   }
-
-  const resultBox = document.getElementById('compareResult');
-  resultBox.innerHTML = '';
+  const rb = document.getElementById('compareResult');
+  rb.innerHTML = '';
   if (compareSlots[0] && compareSlots[1]) {
-    const sA = calculateLookGrade(compareSlots[0].nutriments).percent;
-    const sB = calculateLookGrade(compareSlots[1].nutriments).percent;
-    if (sA > sB) {
-      resultBox.innerHTML = `<div class="compare-winner-bar">🏆 Winner: ${compareSlots[0].product_name} zyada healthy hai!</div>`;
-    } else if (sB > sA) {
-      resultBox.innerHTML = `<div class="compare-winner-bar">🏆 Winner: ${compareSlots[1].product_name} zyada healthy hai!</div>`;
-    } else {
-      resultBox.innerHTML = `<div class="compare-tie-bar">🤝 Tie! Dono ka health index same hai.</div>`;
-    }
+    const a = grade(compareSlots[0].nutriments).pct;
+    const b = grade(compareSlots[1].nutriments).pct;
+    rb.innerHTML = a > b
+      ? `<div class="compare-winner-bar">🏆 ${compareSlots[0].product_name} zyada healthy!</div>`
+      : b > a
+      ? `<div class="compare-winner-bar">🏆 ${compareSlots[1].product_name} zyada healthy!</div>`
+      : `<div class="compare-tie-bar">🤝 Dono equal hain!</div>`;
   }
 }
+function removeSlot(i, e) { e.stopPropagation(); compareSlots[i] = null; renderCompare(); }
+function resetCompare()    { compareSlots = [null,null]; renderCompare(); toast('Compare reset!'); }
 
-function removeSlot(index, event) {
-  event.stopPropagation();
-  compareSlots[index] = null;
-  renderCompare();
-}
-
-function resetCompare() {
-  compareSlots = [null, null];
-  renderCompare();
-  showToast('Comparison reset ho gaya!');
-}
-
-/* ============================================================
-   HISTORY
-   ============================================================ */
-function pushHistory(item) {
-  if (!item) return;
-  historyList = historyList.filter(x => x.product_name !== item.product_name);
-  historyList.unshift(item);
-  if (historyList.length > 5) historyList.pop();
-  try { localStorage.setItem('bitelook_history', JSON.stringify(historyList)); } catch(e) {}
+/* ─── HISTORY ─── */
+function pushHistory(p) {
+  history = history.filter(x => x.product_name !== p.product_name);
+  history.unshift(p);
+  if (history.length > 5) history.pop();
+  try { localStorage.setItem('bl_history', JSON.stringify(history)); } catch(e) {}
   renderHistory();
 }
-
 function renderHistory() {
-  const node = document.getElementById('historyListContainer');
-  node.innerHTML = '';
-  if (historyList.length === 0) {
-    node.innerHTML = `<div style="font-size:13px;color:var(--text-muted);font-weight:600;text-align:center;padding:10px 0">Abhi koi scan nahi hua.</div>`;
+  const el = document.getElementById('historyList');
+  if (!history.length) {
+    el.innerHTML = `<div style="font-size:13px;color:var(--text-muted);font-weight:600;text-align:center;padding:10px 0">Koi scan nahi hua abhi.</div>`;
     return;
   }
-  historyList.forEach(item => {
-    const row = document.createElement('div');
-    row.className = 'hist-row';
-    const score = calculateLookGrade(item.nutriments);
-    row.innerHTML = `<span>${item.product_name}</span><span style="color:${score.color}">Grade ${score.grade}</span>`;
-    row.onclick = () => { currentProduct = item; setMode('search'); buildProductUI(); };
-    node.appendChild(row);
+  el.innerHTML = '';
+  history.forEach(p => {
+    const g = grade(p.nutriments);
+    const r = document.createElement('div');
+    r.className = 'hist-row';
+    r.innerHTML = `<span>${p.product_name}</span><span style="color:${g.color}">Grade ${g.g}</span>`;
+    r.onclick = () => { currentProduct = p; setMode('search'); showProduct(p); };
+    el.appendChild(r);
   });
 }
-
 function clearHistory() {
-  historyList = [];
-  try { localStorage.removeItem('bitelook_history'); } catch(e) {}
+  history = [];
+  try { localStorage.removeItem('bl_history'); } catch(e) {}
   renderHistory();
-  showToast('History clear ho gaya!');
+  toast('History clear!');
 }
 
-/* ============================================================
-   UTILITY
-   ============================================================ */
-function showLoader(status, text, sub) {
-  const el = document.getElementById('loading');
-  el.style.display = status ? 'flex' : 'none';
-  if (text) document.getElementById('loaderText').innerText = text;
-  if (sub) document.getElementById('loaderSub').innerText = sub;
+/* ─── UTILS ─── */
+function setLoader(on, text, sub) {
+  document.getElementById('loader').style.display = on ? 'flex' : 'none';
+  if (text) document.getElementById('loaderText').textContent = text;
+  if (sub)  document.getElementById('loaderSub').textContent  = sub;
 }
-
-function setLoaderText(text, sub) {
-  document.getElementById('loaderText').innerText = text;
-  if (sub) document.getElementById('loaderSub').innerText = sub;
-}
-
-function hideAllLayouts() {
+function hideLayouts() {
   document.getElementById('productCard').style.display = 'none';
   document.getElementById('resultsGrid').style.display = 'none';
-  document.getElementById('harmfulContainer').style.display = 'none';
 }
-
-function setSearchUIBusy(busy) {
-  const btn = document.getElementById('searchBtn');
-  const inp = document.getElementById('searchInput');
-  btn.disabled = busy;
-  inp.disabled = busy;
-  btn.innerText = busy ? '...' : 'FIND';
+function setBusy(b) {
+  document.getElementById('searchBtn').disabled   = b;
+  document.getElementById('searchInput').disabled = b;
+  document.getElementById('searchBtn').textContent = b ? '...' : 'FIND';
 }
-
-let toastTimer = null;
-function showToast(msg, isAlert) {
-  const toast = document.getElementById('statusMsg');
-  toast.innerText = msg;
-  toast.style.display = 'block';
-  toast.style.backgroundColor = isAlert ? 'var(--score-bad)' : '#2D2727';
+function toast(msg, err) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = err ? 'var(--score-bad)' : '#2D2727';
+  el.style.display = 'block';
   if (toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 3500);
+  toastTimer = setTimeout(() => { el.style.display = 'none'; }, 3000);
 }
 </script>
 </body>

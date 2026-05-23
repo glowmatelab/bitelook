@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>BiteLook // YUMMY FOOD HUD</title>
+<title>BiteLook //</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -440,21 +440,27 @@ function startCamera() {
   btn.disabled = true;
   btn.textContent = '⏳ Camera on ho raha hai...';
 
+  /* Quagga needs a VISIBLE container — show UI before init */
+  document.getElementById('scannerIdle').style.display = 'none';
+  document.getElementById('video').style.display = 'block';
+  document.getElementById('scanOverlay').style.display = 'block';
+  document.getElementById('scanPill').style.display = 'block';
+  document.getElementById('cameraBtn').classList.add('hidden');
+  document.getElementById('stopBtn').classList.remove('hidden');
+
+  /* Remove any previous listener to avoid duplicate fires */
+  try { Quagga.offDetected(); } catch(e) {}
+
   Quagga.init({
     inputStream: {
       type: 'LiveStream',
       target: document.getElementById('video'),
-      constraints: {
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
-        facingMode: 'environment'  /* back camera */
-      }
+      constraints: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
     },
     locator: { patchSize: 'medium', halfSample: true },
-    numOfWorkers: 1,
-    frequency: 10,   /* decode attempts per second — balanced */
+    numOfWorkers: navigator.hardwareConcurrency > 2 ? 2 : 1,
+    frequency: 12,
     decoder: {
-      /* Only common barcode formats — faster detection */
       readers: ['ean_reader', 'ean_8_reader', 'upc_reader', 'upc_e_reader', 'code_128_reader']
     },
     locate: true
@@ -462,11 +468,17 @@ function startCamera() {
     if (err) {
       btn.disabled = false;
       btn.textContent = 'LAUNCH SCANNER 🚀';
+      document.getElementById('scannerIdle').style.display = '';
+      document.getElementById('video').style.display = 'none';
+      document.getElementById('scanOverlay').style.display = 'none';
+      document.getElementById('scanPill').style.display = 'none';
+      document.getElementById('cameraBtn').classList.remove('hidden');
+      document.getElementById('stopBtn').classList.add('hidden');
       const msg = err.name === 'NotAllowedError' ? 'Camera permission deny hua. Browser settings mein allow karo.'
-                : err.name === 'NotFoundError'   ? 'Koi camera nahi mila.'
+                : err.name === 'NotFoundError'   ? 'Koi camera nahi mila device mein.'
                 : err.name === 'NotReadableError' ? 'Camera kisi aur app ne pakad rakha hai.'
                 : 'Camera error: ' + (err.message || err.name);
-      errEl.textContent = '📵 ' + msg;
+      errEl.textContent = '\uD83D\uDCF5 ' + msg;
       errEl.style.display = 'block';
       return;
     }
@@ -474,41 +486,27 @@ function startCamera() {
     Quagga.start();
     scanning = true;
     lastBarcode = null;
-
-    /* Show scanner UI */
-    document.getElementById('scannerIdle').style.display = 'none';
-    document.getElementById('video').style.display = 'block';
-    document.getElementById('scanOverlay').style.display = 'block';
-    document.getElementById('scanPill').style.display = 'block';
-    document.getElementById('cameraBtn').classList.add('hidden');
-    document.getElementById('stopBtn').classList.remove('hidden');
     btn.disabled = false;
     btn.textContent = 'LAUNCH SCANNER 🚀';
   });
 
-  /* ── Quagga detected callback ── */
+  /* onDetected registered once per startCamera call */
   Quagga.onDetected(data => {
     if (!scanning) return;
     const code = data?.codeResult?.code;
-    if (!code || code === lastBarcode) return; /* ignore repeats */
+    if (!code || code === lastBarcode) return;
 
-    const confidence = data.codeResult.decodedCodes
-      .filter(c => c.error !== undefined)
-      .reduce((acc, c) => acc + (1 - c.error), 0) /
-      (data.codeResult.decodedCodes.filter(c => c.error !== undefined).length || 1);
-
-    if (confidence < 0.65) return; /* low confidence — skip */
+    const codes = (data.codeResult.decodedCodes || []).filter(c => c.error !== undefined);
+    const confidence = codes.length ? codes.reduce((s,c) => s+(1-c.error),0)/codes.length : 0;
+    if (confidence < 0.6) return;
 
     lastBarcode = code;
     navigator.vibrate?.([80, 40, 80]);
-
-    /* Flash effect */
     const flash = document.getElementById('scanFlash');
     flash.classList.add('pop');
     setTimeout(() => flash.classList.remove('pop'), 150);
-
     stopCamera();
-    toast('✅ Barcode: ' + code);
+    toast('\u2705 Barcode: ' + code);
     fetchProduct(code);
   });
 }

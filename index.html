@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>BiteLook //</title>
+<title>BiteLook // YUMMY FOOD HUD</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -361,7 +361,7 @@
 </div>
 
 <!-- Quagga2 — fast, lightweight barcode scanner -->
-<script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.4/dist/quagga.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
 
 <script>
 /* ─── CONSTANTS ─── */
@@ -402,6 +402,7 @@ const HAZARDS = [
 const GRADE_LABELS = { A:'Excellent!', B:'Good', C:'Okay', D:'Poor', E:'Avoid!' };
 
 /* ─── STATE ─── */
+let codeReader     = null;
 let currentProduct = null;
 let compareSlots   = [null, null];
 let history        = [];
@@ -425,101 +426,110 @@ function setMode(m) {
 /* ══════════════════════════════════════════════════════════
    SCANNER — Quagga2 (fast, lightweight)
    ══════════════════════════════════════════════════════════ */
-function startCamera() {
-  const btn = document.getElementById('cameraBtn');
-  const errEl = document.getElementById('camErr');
+async function startCamera() {
+  const btn    = document.getElementById('cameraBtn');
+  const errEl  = document.getElementById('camErr');
+  const vid    = document.getElementById('video');
   errEl.style.display = 'none';
 
-  if (typeof Quagga === 'undefined') {
-    toast('Scanner load nahi hua, page refresh karo.', true); return;
-  }
   if (!navigator.mediaDevices?.getUserMedia) {
     toast('Camera support nahi is browser mein.', true); return;
   }
 
-  btn.disabled = true;
+  btn.disabled    = true;
   btn.textContent = '⏳ Camera on ho raha hai...';
 
-  /* Quagga needs a VISIBLE container — show UI before init */
-  document.getElementById('scannerIdle').style.display = 'none';
-  document.getElementById('video').style.display = 'block';
-  document.getElementById('scanOverlay').style.display = 'block';
-  document.getElementById('scanPill').style.display = 'block';
-  document.getElementById('cameraBtn').classList.add('hidden');
-  document.getElementById('stopBtn').classList.remove('hidden');
+  try {
+    /* Step 1 — get stream directly, no library needed for this */
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: false
+    });
 
-  /* Remove any previous listener to avoid duplicate fires */
-  try { Quagga.offDetected(); } catch(e) {}
+    /* Step 2 — attach stream to video and show UI */
+    vid.srcObject = stream;
+    vid.style.display = 'block';
+    document.getElementById('scannerIdle').style.display = 'none';
+    document.getElementById('scanOverlay').style.display = 'block';
+    document.getElementById('scanPill').style.display    = 'block';
+    document.getElementById('cameraBtn').classList.add('hidden');
+    document.getElementById('stopBtn').classList.remove('hidden');
+    btn.disabled    = false;
+    btn.textContent = 'LAUNCH SCANNER 🚀';
 
-  Quagga.init({
-    inputStream: {
-      type: 'LiveStream',
-      target: document.getElementById('video'),
-      constraints: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
-    },
-    locator: { patchSize: 'medium', halfSample: true },
-    numOfWorkers: navigator.hardwareConcurrency > 2 ? 2 : 1,
-    frequency: 12,
-    decoder: {
-      readers: ['ean_reader', 'ean_8_reader', 'upc_reader', 'upc_e_reader', 'code_128_reader']
-    },
-    locate: true
-  }, err => {
-    if (err) {
-      btn.disabled = false;
-      btn.textContent = 'LAUNCH SCANNER 🚀';
-      document.getElementById('scannerIdle').style.display = '';
-      document.getElementById('video').style.display = 'none';
-      document.getElementById('scanOverlay').style.display = 'none';
-      document.getElementById('scanPill').style.display = 'none';
-      document.getElementById('cameraBtn').classList.remove('hidden');
-      document.getElementById('stopBtn').classList.add('hidden');
-      const msg = err.name === 'NotAllowedError' ? 'Camera permission deny hua. Browser settings mein allow karo.'
-                : err.name === 'NotFoundError'   ? 'Koi camera nahi mila device mein.'
-                : err.name === 'NotReadableError' ? 'Camera kisi aur app ne pakad rakha hai.'
-                : 'Camera error: ' + (err.message || err.name);
-      errEl.textContent = '\uD83D\uDCF5 ' + msg;
-      errEl.style.display = 'block';
+    await vid.play();
+    scanning    = true;
+    lastBarcode = null;
+
+    /* Step 3 — init ZXing decoder AFTER stream is live */
+    if (typeof ZXing === 'undefined') {
+      toast('Scanner library load nahi hua, barcode manually type karo.', true);
       return;
     }
 
-    Quagga.start();
-    scanning = true;
-    lastBarcode = null;
-    btn.disabled = false;
+    const hints = new Map();
+    hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+    codeReader = new ZXing.BrowserMultiFormatReader(hints);
+
+    /* Use the already-playing video — pass null as deviceId */
+    codeReader.decodeFromVideoElement(vid, (result, err) => {
+      if (!scanning) return;
+      if (!result)   return; /* ZXing fires err every frame when no barcode — ignore */
+
+      const code = result.getText();
+      if (!code || code === lastBarcode) return;
+      lastBarcode = code;
+
+      navigator.vibrate?.([80, 40, 80]);
+      const flash = document.getElementById('scanFlash');
+      flash.classList.add('pop');
+      setTimeout(() => flash.classList.remove('pop'), 150);
+
+      stopCamera();
+      toast('✅ Barcode mila!');
+      fetchProduct(code);
+    });
+
+  } catch(err) {
+    btn.disabled    = false;
     btn.textContent = 'LAUNCH SCANNER 🚀';
-  });
+    /* Revert UI */
+    vid.style.display = 'none';
+    document.getElementById('scannerIdle').style.display = '';
+    document.getElementById('scanOverlay').style.display = 'none';
+    document.getElementById('scanPill').style.display    = 'none';
+    document.getElementById('cameraBtn').classList.remove('hidden');
+    document.getElementById('stopBtn').classList.add('hidden');
 
-  /* onDetected registered once per startCamera call */
-  Quagga.onDetected(data => {
-    if (!scanning) return;
-    const code = data?.codeResult?.code;
-    if (!code || code === lastBarcode) return;
-
-    const codes = (data.codeResult.decodedCodes || []).filter(c => c.error !== undefined);
-    const confidence = codes.length ? codes.reduce((s,c) => s+(1-c.error),0)/codes.length : 0;
-    if (confidence < 0.6) return;
-
-    lastBarcode = code;
-    navigator.vibrate?.([80, 40, 80]);
-    const flash = document.getElementById('scanFlash');
-    flash.classList.add('pop');
-    setTimeout(() => flash.classList.remove('pop'), 150);
-    stopCamera();
-    toast('\u2705 Barcode: ' + code);
-    fetchProduct(code);
-  });
+    const msg = err.name === 'NotAllowedError'  ? 'Camera permission deny hua — browser settings mein allow karo.'
+              : err.name === 'NotFoundError'    ? 'Koi camera nahi mila device mein.'
+              : err.name === 'NotReadableError' ? 'Camera kisi aur app ne pakad rakha hai.'
+              : 'Camera error: ' + (err.message || err.name);
+    errEl.textContent  = '📵 ' + msg;
+    errEl.style.display = 'block';
+  }
 }
 
 function stopCamera() {
-  if (!scanning && typeof Quagga === 'undefined') return;
   scanning = false;
-  try { Quagga.stop(); } catch(e) {}
+
+  /* Stop ZXing decoder */
+  if (codeReader) {
+    try { codeReader.reset(); } catch(e) {}
+    codeReader = null;
+  }
+
+  /* Stop all camera tracks */
+  const vid = document.getElementById('video');
+  if (vid.srcObject) {
+    vid.srcObject.getTracks().forEach(t => t.stop());
+    vid.srcObject = null;
+  }
+  vid.style.display = 'none';
 
   document.getElementById('scannerIdle').style.display = '';
-  document.getElementById('video').style.display = 'none';
   document.getElementById('scanOverlay').style.display = 'none';
-  document.getElementById('scanPill').style.display = 'none';
+  document.getElementById('scanPill').style.display    = 'none';
   document.getElementById('cameraBtn').classList.remove('hidden');
   document.getElementById('stopBtn').classList.add('hidden');
 }
